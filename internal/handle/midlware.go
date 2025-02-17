@@ -7,9 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/Alexandrfield/Gomarket/internal/common"
-	"github.com/Alexandrfield/Gomarket/internal/server"
 )
 
 type (
@@ -37,7 +34,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode // захватываем код статуса
 }
 
-func WithLogging(logger common.Logger, config *server.Config, h http.HandlerFunc) http.HandlerFunc {
+func (han *ServiceHandler) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -49,13 +46,30 @@ func WithLogging(logger common.Logger, config *server.Config, h http.HandlerFunc
 			size:   0,
 		}
 
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			han.Logger.Debugf("Missing authorization header")
+			return
+		}
+		tokenString = tokenString[len("Bearer "):]
+
+		isValidToken, err := han.authServer.CheckToken(tokenString)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			han.Logger.Debugf("Error check Token. err:%w", err)
+		}
+		if !isValidToken {
+			w.WriteHeader(http.StatusUnauthorized)
+			han.Logger.Debugf("Token is not valid")
+		}
 		var lw loggingResponseWriter
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			logger.Debugf("try use gzip")
+			han.Logger.Debugf("try use gzip")
 			gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 			if err != nil {
 				_, _ = io.WriteString(w, err.Error())
-				logger.Debugf("gzip.NewWriterLevel error:%w", err)
+				han.Logger.Debugf("gzip.NewWriterLevel error:%w", err)
 			}
 			w.Header().Set("Content-Encoding", "gzip")
 			defer func() {
@@ -66,7 +80,7 @@ func WithLogging(logger common.Logger, config *server.Config, h http.HandlerFunc
 				responseData:   responseData,
 			}
 		} else {
-			logger.Debugf("not use gzip")
+			han.Logger.Debugf("not use gzip")
 			lw = loggingResponseWriter{
 				ResponseWriter: w, // встраиваем оригинальный http.ResponseWriter
 				responseData:   responseData,
@@ -86,7 +100,7 @@ func WithLogging(logger common.Logger, config *server.Config, h http.HandlerFunc
 
 		h.ServeHTTP(&lw, r)
 		duration := time.Since(start)
-		logger.Infof("uri:%s; method:%s; status:%d; size:%d; duration:%s;",
+		han.Logger.Infof("uri:%s; method:%s; status:%d; size:%d; duration:%s;",
 			uri, method, responseData.status, responseData.size, duration)
 	}
 	return http.HandlerFunc(logFn)

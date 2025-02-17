@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/Alexandrfield/Gomarket/internal/handle"
+	"github.com/Alexandrfield/Gomarket/internal/market"
 	"github.com/Alexandrfield/Gomarket/internal/server"
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -43,12 +44,14 @@ func main() {
 	if err != nil {
 		logger.Fatalf("cant init storage %s", err)
 	}
-
-	server := handle.ServiceHandler{Storage: storageServer}
+	communicatorExternalService := market.CommunicatorAddServer{Logger: logger, Storage: storageServer}
+	commChan := communicatorExternalService.Init()
+	server := handle.ServiceHandler{Storage: storageServer, BufferOrder: commChan}
+	server.Init()
 	router := chi.NewRouter()
-	router.Post(`/api/user/register/`, server.Rgistarte)
-	router.Post(`/api/user/login/`, server.Login)
-	router.Post(`/api/user/orders/`, server.Orders)
+	router.Post(`/api/user/register/`, server.Rgistarte())
+	router.Post(`/api/user/login/`, server.Login())
+	router.Post(`/api/user/orders/`, server.Orders())
 	router.Get(`/api/user/orders/`, server.GetOrders)
 	router.Post(`/api/user/register/`, server.Rgistarte)
 	router.Get(`/api/user/balance/`, server.GetBalance)
