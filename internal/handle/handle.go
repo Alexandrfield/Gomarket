@@ -2,11 +2,11 @@ package handle
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/Alexandrfield/Gomarket/internal/common"
-	"github.com/Alexandrfield/Gomarket/internal/market"
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 )
 
@@ -19,7 +19,7 @@ type ServiceHandler struct {
 	Logger      common.Logger
 	Storage     storage.StorageCommunicator
 	authServer  AuthorizationServer
-	BufferOrder chan market.PaymentOrder
+	BufferOrder chan common.UsertOrder
 }
 
 func (han *ServiceHandler) Init() {
@@ -39,14 +39,14 @@ func (han *ServiceHandler) GetOrders() http.HandlerFunc {
 	return han.WithLogging(han.getOrders)
 
 }
-func (han *ServiceHandler) GetBalance(res http.ResponseWriter, req *http.Request) http.HandlerFunc {
-
+func (han *ServiceHandler) GetBalance() http.HandlerFunc {
+	return han.WithLogging(han.getBalance)
 }
-func (han *ServiceHandler) Withdraw(res http.ResponseWriter, req *http.Request) http.HandlerFunc {
-
+func (han *ServiceHandler) Withdraw() http.HandlerFunc {
+	return han.WithLogging(han.withdrawBalance)
 }
-func (han *ServiceHandler) Withdrawals(res http.ResponseWriter, req *http.Request) http.HandlerFunc {
-
+func (han *ServiceHandler) Withdrawals() http.HandlerFunc {
+	return han.WithLogging(han.getWithdrawals)
 }
 
 func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request) {
@@ -152,13 +152,8 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	default:
 		res.WriteHeader(http.StatusOK)
 	}
-	han.BufferOrder <- common.CreatUserOrder(idUser, data)
+	han.BufferOrder <- common.CreatUserOrder(strconv.Itoa(idUser), string(data))
 	res.Header().Set("Content-Type", "application/json")
-	// _, err = res.Write([]byte(token))
-	// if err != nil {
-	// 	han.Logger.Debugf("issue with write %w", err)
-	// }
-	//res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request) {
 	data := make([]byte, 10000)
@@ -167,26 +162,124 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
-	idOrder, err := han.authServer.CheckTokenGetUserID(tokenString)
+	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	st, err := han.Storage.GetOrderStatus(string(idOrder), strconv.Itoa(idOrder))
+	userOrders, err := han.Storage.GetAllUserOrders(string(idUser))
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
-	}
-
-	switch st {
-	case "empty":
-		res.WriteHeader(http.StatusAccepted)
-	case "busy":
-		res.WriteHeader(http.StatusConflict)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
-	default:
-		res.WriteHeader(http.StatusOK)
 	}
-	han.BufferOrder <- market.PaymentOrder{IdUser: idOrder, IdOrder: data}
-	res.Header().Set("Content-Type", "application/json")
+	if len(userOrders) == 0 {
+		res.WriteHeader(http.StatusOK)
+		http.Error(res, err.Error(), http.StatusNoContent)
+		return
+	}
 
+	ordersJson, err := json.Marshal(userOrders)
+	_, err = res.Write(ordersJson)
+	if err != nil {
+		han.Logger.Debugf("issue with write %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+}
+
+func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request) {
+	data := make([]byte, 10000)
+	n, _ := req.Body.Read(data)
+	data = data[:n]
+	han.Logger.Debugf("body:%v", data)
+
+	tokenString := req.Header.Get("Authorization")
+	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
+	if err != nil {
+		han.Logger.Debugf("issue get id from token %w", err)
+	}
+
+	currentBalance, allPoints, err := han.Storage.GetCountMarketPoints(string(idUser))
+	if err != nil {
+		han.Logger.Warnf("issue get order status %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	ordersJson := fmt.Sprintf("{\"current\":%f, \"withdrawn\":%f}", currentBalance, allPoints)
+	_, err = res.Write([]byte(ordersJson))
+	if err != nil {
+		han.Logger.Debugf("issue with write %w", err)
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+}
+
+func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Request) {
+	data := make([]byte, 10000)
+	n, _ := req.Body.Read(data)
+	data = data[:n]
+	han.Logger.Debugf("body:%v", data)
+
+	tokenString := req.Header.Get("Authorization")
+	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
+	if err != nil {
+		han.Logger.Debugf("issue get id from token %w", err)
+	}
+	var withdrawOrd common.WithdrawOrder
+	err = json.Unmarshal(data, &withdrawOrd)
+	if err != nil {
+		han.Logger.Warnf("issue unmarshal bodys %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = han.Storage.UseMarketPoints(string(idUser), withdrawOrd)
+	// TODO: обработать ошибки для правильных ответов
+	if err != nil {
+		han.Logger.Warnf("issue get order status %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
+}
+
+func (han *ServiceHandler) getWithdrawals(res http.ResponseWriter, req *http.Request) {
+	data := make([]byte, 10000)
+	n, _ := req.Body.Read(data)
+	data = data[:n]
+	han.Logger.Debugf("body:%v", data)
+
+	tokenString := req.Header.Get("Authorization")
+	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
+	if err != nil {
+		han.Logger.Debugf("issue get id from token %w", err)
+	}
+
+	userWithdrawls, err := han.Storage.GetAllWithdrawls(string(idUser))
+	if err != nil {
+		han.Logger.Warnf("issue get order status %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if len(userWithdrawls) == 0 {
+		res.WriteHeader(http.StatusOK)
+		http.Error(res, err.Error(), http.StatusNoContent)
+		return
+	}
+
+	ordersJson, err := json.Marshal(userWithdrawls)
+	_, err = res.Write(ordersJson)
+	if err != nil {
+		han.Logger.Debugf("issue with write %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
 }

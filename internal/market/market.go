@@ -9,14 +9,14 @@ type CommunicatorAddServer struct {
 	Logger      common.Logger
 	Storage     storage.StorageCommunicator
 	done        chan struct{}
-	bufferOrder chan PaymentOrder
+	bufferOrder chan common.UsertOrder
 }
 
-func (communicator *CommunicatorAddServer) Init() chan PaymentOrder {
-	communicator.bufferOrder = make(chan PaymentOrder, 10)
+func (communicator *CommunicatorAddServer) Init() chan common.UsertOrder {
+	communicator.bufferOrder = make(chan common.UsertOrder, 10)
 	return communicator.bufferOrder
 }
-func (communicator *CommunicatorAddServer) sendToAddServer(order PaymentOrder) {
+func (communicator *CommunicatorAddServer) sendToAddServer(order common.UsertOrder) {
 }
 func (communicator *CommunicatorAddServer) processorSendToServer() {
 

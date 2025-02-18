@@ -52,12 +52,12 @@ func main() {
 	router.Post(`/api/user/register/`, server.Rgistarte())
 	router.Post(`/api/user/login/`, server.Login())
 	router.Post(`/api/user/orders/`, server.Orders())
-	router.Get(`/api/user/orders/`, server.GetOrders)
-	router.Post(`/api/user/register/`, server.Rgistarte)
-	router.Get(`/api/user/balance/`, server.GetBalance)
+	router.Get(`/api/user/orders/`, server.GetOrders())
+	router.Post(`/api/user/register/`, server.Rgistarte())
+	router.Get(`/api/user/balance/`, server.GetBalance())
 
-	router.Post(`/api/user/withdraw/`, server.Withdraw)
-	router.Get(`/api/user/withdrawals/`, server.Withdrawals)
+	router.Post(`/api/user/withdraw/`, server.Withdraw())
+	router.Get(`/api/user/withdrawals/`, server.Withdrawals())
 
 	logger.Info("Server started")
 	go func() {
