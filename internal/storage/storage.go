@@ -11,6 +11,7 @@ type StorageCommunicator interface {
 	UseMarketPoints(user string, withdrawOrd common.WithdrawOrder) error
 	GetAllUserOrders(user string) ([]common.PaymentOrder, error)
 	GetAllWithdrawls(user string) ([]common.WithdrawOrder, error)
+	UpdateUserOrder(ord common.UsertOrder) error
 }
 
 func GetStorage(config Config) (StorageCommunicator, error) {
@@ -43,4 +44,8 @@ func (stor *Storage) GetAllUserOrders(user string) ([]common.PaymentOrder, error
 }
 func (stor *Storage) GetAllWithdrawls(user string) ([]common.WithdrawOrder, error) {
 	return []common.WithdrawOrder{}, nil
+}
+
+func (stor *Storage) UpdateUserOrder(ord common.UsertOrder) error {
+	return nil
 }
