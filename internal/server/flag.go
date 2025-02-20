@@ -14,7 +14,7 @@ func ParseFlags() (Config, error) {
 	flag.StringVar(&config.AccurakSystemAddres, "r", "localhost:8090",
 		"addres for connect accures sysem [default:localhost:8080]") // RUN_ADDRESS
 	flag.Parse()
-	//TODO: изменить приоритет
+	// TODO: изменить приоритет
 	if envServerAdderess := os.Getenv("RUN_ADDRESS"); envServerAdderess != "" {
 		config.ServerAddress = envServerAdderess
 	}
@@ -24,6 +24,6 @@ func ParseFlags() (Config, error) {
 	if envAccurakSystemAddres := os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); envAccurakSystemAddres != "" {
 		config.AccurakSystemAddres = envAccurakSystemAddres
 	}
-	//config.DatabaseURI = "host=localhost:5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
+	// config.DatabaseURI = "host=localhost port=5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
 	return config, nil
 }

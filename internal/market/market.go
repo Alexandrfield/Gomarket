@@ -25,10 +25,10 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 	communicator.client = &http.Client{
 		Timeout: time.Second * 5, // интервал ожидания: 1 секунда
 	}
-
+	communicator.processorSendToServer()
 	return communicator.bufferOrder
 }
-func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order common.UserOrder) {
+func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common.UserOrder) {
 	waitsTime := []int{1, 2, 3, 4, 5}
 	for _, val := range waitsTime {
 		ans, err := communicator.sendToAddServer(order)
@@ -36,20 +36,18 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order common.
 			communicator.Logger.Errorf("sendToAddServer err:%s", err)
 		}
 		temp := common.UserOrder{IDUser: order.IDUser, Ord: ans}
-		communicator.Storage.UpdateUserOrder(temp)
+		_ = communicator.Storage.UpdateUserOrder(&temp)
 		if ans.Status == common.OrderStatusProcessing || ans.Status == common.OrderStatusInvalid {
 			break
 		}
 		time.Sleep(time.Second * time.Duration(val))
 	}
-
 }
-func (communicator *CommunicatorAddServer) sendToAddServer(order common.UserOrder) (common.PaymentOrder, error) {
-
+func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrder) (common.PaymentOrder, error) {
 	var ord common.PaymentOrder
 	url := fmt.Sprintf("http://%s/api/orders/%s", communicator.AddresMarket, order.Ord.Number)
 	req, err := http.NewRequest(
-		http.MethodGet, url, nil,
+		http.MethodGet, url, http.NoBody,
 	)
 	if err != nil {
 		communicator.Logger.Warnf("http.NewRequest. err: %s\n", err)
@@ -74,16 +72,15 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order common.UserOrde
 		return ord, fmt.Errorf("error reading body. err:%w", err)
 	}
 	if err := json.Unmarshal(ans, &ord); err != nil {
-		return ord, fmt.Errorf("Error umarshal response. err:%s", err.Error())
+		return ord, fmt.Errorf("error umarshal response. err:%s", err.Error())
 	}
 	return ord, nil
 }
 func (communicator *CommunicatorAddServer) processorSendToServer() {
-
 	for {
 		select {
 		case ord := <-communicator.bufferOrder:
-			go communicator.sendToAddServer(ord)
+			go communicator.proccesOrderToAddServer(&ord)
 		case <-communicator.done:
 			communicator.Logger.Debugf("Stop Proccesing payment orders")
 			return

@@ -10,8 +10,8 @@ type PaymentOrder struct {
 }
 
 type UserOrder struct {
-	Ord    PaymentOrder
 	IDUser string
+	Ord    PaymentOrder
 }
 
 func CreatUserOrder(idUser string, idOrder string) UserOrder {
@@ -20,7 +20,7 @@ func CreatUserOrder(idUser string, idOrder string) UserOrder {
 }
 
 type WithdrawOrder struct {
-	Sum       float64   `json:"sum,omitempty"`
 	Processed time.Time `json:"processed_at,omitempty"`
 	Order     string    `json:"order,omitempty"`
+	Sum       float64   `json:"sum,omitempty"`
 }

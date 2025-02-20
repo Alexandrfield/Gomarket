@@ -32,7 +32,7 @@ func (autServer *AuthorizationServer) BuildJWTString(idUser string) (string, err
 
 	tokenString, err := token.SignedString(autServer.secretKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("errors sign. err:%w", err)
 	}
 	return tokenString, nil
 }

@@ -17,10 +17,10 @@ type Credentials struct {
 }
 
 type ServiceHandler struct {
-	Logger      common.Logger
-	Storage     storage.StorageCommunicator
-	authServer  AuthorizationServer
 	BufferOrder chan common.UserOrder
+	authServer  AuthorizationServer
+	Storage     storage.StorageCommunicator
+	Logger      common.Logger
 }
 
 func (han *ServiceHandler) Init() {
@@ -38,7 +38,6 @@ func (han *ServiceHandler) Orders() http.HandlerFunc {
 }
 func (han *ServiceHandler) GetOrders() http.HandlerFunc {
 	return han.WithLogging(han.getOrders)
-
 }
 func (han *ServiceHandler) GetBalance() http.HandlerFunc {
 	return han.WithLogging(han.getBalance)
@@ -67,7 +66,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		return
 	}
 	if isExist {
-		http.Error(res, err.Error(), http.StatusConflict)
+		res.WriteHeader(http.StatusConflict)
 		return
 	}
 	idUser, err := han.Storage.CreateNewUser(cred.Login, server.ComplicatedPasswd(cred.Password))
@@ -109,7 +108,7 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if !isExist {
-		http.Error(res, err.Error(), http.StatusUnauthorized)
+		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	idUs, err := han.Storage.AytorizationUser(cred.Login, server.ComplicatedPasswd(cred.Password))
@@ -148,8 +147,8 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	userOrder := common.CreatUserOrder(string(idUser), string(idOrder))
-	err = han.Storage.SetOrder(userOrder)
+	userOrder := common.CreatUserOrder(idUser, string(idOrder))
+	err = han.Storage.SetOrder(&userOrder)
 	if err != nil {
 		if errors.Is(err, storage.ErrOrderLoadedAnotherUser) {
 			res.WriteHeader(http.StatusConflict)
@@ -177,20 +176,24 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	userOrders, err := han.Storage.GetAllUserOrders(string(idUser))
+	userOrders, err := han.Storage.GetAllUserOrders(idUser)
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if len(userOrders) == 0 {
-		res.WriteHeader(http.StatusOK)
-		http.Error(res, err.Error(), http.StatusNoContent)
+		res.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	ordersJson, err := json.Marshal(userOrders)
-	_, err = res.Write(ordersJson)
+	ordersJSON, err := json.Marshal(userOrders)
+	if err != nil {
+		han.Logger.Debugf("issue with Marshal obj. err: %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = res.Write(ordersJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -213,15 +216,15 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	currentBalance, allPoints, err := han.Storage.GetCountMarketPoints(string(idUser))
+	currentBalance, allPoints, err := han.Storage.GetCountMarketPoints(idUser)
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	ordersJson := fmt.Sprintf("{\"current\":%f, \"withdrawn\":%f}", currentBalance, allPoints)
-	_, err = res.Write([]byte(ordersJson))
+	ordersJSON := fmt.Sprintf("{\"current\":%f, \"withdrawn\":%f}", currentBalance, allPoints)
+	_, err = res.Write([]byte(ordersJSON))
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
@@ -248,7 +251,7 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = han.Storage.UseMarketPoints(string(idUser), withdrawOrd)
+	err = han.Storage.UseMarketPoints(idUser, &withdrawOrd)
 	// TODO: обработать ошибки для правильных ответов
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
@@ -270,20 +273,24 @@ func (han *ServiceHandler) getWithdrawals(res http.ResponseWriter, req *http.Req
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	userWithdrawls, err := han.Storage.GetAllWithdrawls(string(idUser))
+	userWithdrawls, err := han.Storage.GetAllWithdrawls(idUser)
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if len(userWithdrawls) == 0 {
-		res.WriteHeader(http.StatusOK)
-		http.Error(res, err.Error(), http.StatusNoContent)
+		res.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	ordersJson, err := json.Marshal(userWithdrawls)
-	_, err = res.Write(ordersJson)
+	ordersJSON, err := json.Marshal(userWithdrawls)
+	if err != nil {
+		han.Logger.Debugf("issue with marshal. err: %w", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = res.Write(ordersJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)

@@ -14,22 +14,22 @@ import (
 	"github.com/Alexandrfield/Gomarket/internal/common"
 )
 
-var ErrPasswordNotValidForUser = errors.New("For this user password not valids")
-var ErrOrderLoadedAnotherUser = errors.New("This num order  was used another user")
-var ErrOrderLoaded = errors.New("For this num is already load")
-var ErrorInsufficientFunds = errors.New("Not enough points for this actions")
+var ErrPasswordNotValidForUser = errors.New("for this user password not valids")
+var ErrOrderLoadedAnotherUser = errors.New("this num order  was used another user")
+var ErrOrderLoaded = errors.New("for this num is already load")
+var ErrorInsufficientFunds = errors.New("not enough points for this actions")
 
 type StorageCommunicator interface {
 	CreateNewUser(login string, password string) (string, error)
 	AytorizationUser(login string, password string) (string, error) // return user_id
 	IsUserLoginExist(login string) (bool, error)
-	SetOrder(ord common.UserOrder) error
-	GetOrder(orderNum string) (common.UserOrder, error)
+	SetOrder(ord *common.UserOrder) error
+	GetOrder(orderNum string) (*common.UserOrder, error)
 	GetCountMarketPoints(user string) (float64, float64, error)
-	UseMarketPoints(userId string, withdrawOrd common.WithdrawOrder) error
-	GetAllUserOrders(userId string) ([]common.PaymentOrder, error)
-	GetAllWithdrawls(userId string) ([]common.WithdrawOrder, error)
-	UpdateUserOrder(ord common.UserOrder) error
+	UseMarketPoints(userID string, withdrawOrd *common.WithdrawOrder) error
+	GetAllUserOrders(userID string) ([]common.PaymentOrder, error)
+	GetAllWithdrawls(userID string) ([]common.WithdrawOrder, error)
+	UpdateUserOrder(ord *common.UserOrder) error
 }
 
 func GetStorage(config Config, logger common.Logger) (StorageCommunicator, error) {
@@ -80,7 +80,8 @@ func (st *DatabaseStorage) Start(databaseDsn string) error {
 	if err != nil {
 		errClose := st.db.Close()
 		if errClose != nil {
-			return fmt.Errorf("can not create table err:%w; end close connection to database err:%w", err, errClose)
+			return fmt.Errorf("can not create table err:%w; end close connection to database err:%w",
+				err, errClose)
 		}
 		return fmt.Errorf("can not create table. err:%w", err)
 	}
@@ -113,14 +114,15 @@ func (st *DatabaseStorage) CreateNewUser(login string, password string) (string,
 	if _, err := tx.ExecContext(ctx, query, login, password, 0.0, 0.0); err != nil {
 		errRol := tx.Rollback()
 		if errRol != nil {
-			return "", fmt.Errorf("error create new user login:%s. err:%w; and error rollback err:%w", login, err, errRol)
+			return "", fmt.Errorf("error create new user login:%s. err:%w; and error rollback err:%w",
+				login, err, errRol)
 		}
 		return "", fmt.Errorf("error create new user. login:%s: %w", login, err)
 	}
 	row := tx.QueryRowContext(context.Background(),
 		"SELECT id FROM Users WHERE login = $1", login)
-	var userId int
-	err = row.Scan(&userId)
+	var userID int
+	err = row.Scan(&userID)
 	if err != nil {
 		return "", fmt.Errorf("error scan value from row. err:%w", err)
 	}
@@ -128,36 +130,33 @@ func (st *DatabaseStorage) CreateNewUser(login string, password string) (string,
 	if err != nil {
 		return "", fmt.Errorf("error with commit transactiom CreateNewUser. err:%w", err)
 	}
-	return strconv.Itoa(userId), nil
+	return strconv.Itoa(userID), nil
 }
 func (st *DatabaseStorage) AytorizationUser(login string, password string) (string, error) { // return user_id
-
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT id, passwd FROM Users WHERE login = $1", login)
-	var userId int
+	var userID int
 	var passwd string
-	err := row.Scan(&userId, &passwd)
+	err := row.Scan(&userID, &passwd)
 	if err != nil {
 		return "", fmt.Errorf("error scan value from row. err:%w", err)
 	}
 	if password != passwd {
 		return "", ErrPasswordNotValidForUser
 	}
-
-	return strconv.Itoa(userId), nil
+	return strconv.Itoa(userID), nil
 }
 func (st *DatabaseStorage) IsUserLoginExist(login string) (bool, error) {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT id FROM Users WHERE login = $1", login)
-	var userId int
-	err := row.Scan(&userId)
+	var userID int
+	err := row.Scan(&userID)
 	if err != nil {
 		return false, fmt.Errorf("error scan value from row. err:%w", err)
 	}
 	return true, nil
 }
-func (st *DatabaseStorage) SetOrder(ord common.UserOrder) error {
-
+func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 	existOrd, err := st.GetOrder(ord.Ord.Number)
 	if err == nil {
 		if existOrd.IDUser != "" {
@@ -167,7 +166,7 @@ func (st *DatabaseStorage) SetOrder(ord common.UserOrder) error {
 				return ErrOrderLoaded
 			}
 		} else {
-			return fmt.Errorf("Not valid data. %s", existOrd)
+			return errors.New("Not valid data. existOrd")
 		}
 	}
 	tx, err := st.db.Begin()
@@ -178,52 +177,49 @@ func (st *DatabaseStorage) SetOrder(ord common.UserOrder) error {
 	query := `INSERT INTO Orders (numer, user, status, points, upload) VALUES ($1, $2, $3, $4, %5)`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if _, err := tx.ExecContext(ctx, query, ord.Ord.Number, ord.IDUser, ord.Ord.Status, ord.Ord.Accural, ord.Ord.Uploaded_at); err != nil {
-		return fmt.Errorf("tx, error while trying to ordc %s: %w", ord, err)
+	if _, err := tx.ExecContext(ctx, query, ord.Ord.Number, ord.IDUser,
+		ord.Ord.Status, ord.Ord.Accural, ord.Ord.Uploaded_at); err != nil {
+		return fmt.Errorf("tx, error while trying to ord. err: %w", err)
 	}
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("error with commit transactiom AddCounter. err:%w", err)
 	}
-
 	return nil
 }
 
-func (st *DatabaseStorage) GetOrder(orderNum string) (common.UserOrder, error) {
+func (st *DatabaseStorage) GetOrder(orderNum string) (*common.UserOrder, error) {
 	var userOrd common.UserOrder
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT  numer, user, status, points, upload FROM Orders WHERE numer = $1", orderNum)
-	err := row.Scan(&userOrd.Ord.Number, &userOrd.IDUser, &userOrd.Ord.Status, &userOrd.Ord.Accural, &userOrd.Ord.Uploaded_at)
+	err := row.Scan(&userOrd.Ord.Number, &userOrd.IDUser, &userOrd.Ord.Status,
+		&userOrd.Ord.Accural, &userOrd.Ord.Uploaded_at)
 	if err != nil {
-		return userOrd, fmt.Errorf("error scan value from row. err:%w", err)
+		return &userOrd, fmt.Errorf("error scan value from row. err:%w", err)
 	}
-	return userOrd, nil
+	return &userOrd, nil
 }
 
-//	func (st *DatabaseStorage) GetOrderStatus(user string, order string) (string, error) {
-//		return "test", nil
-//	}
-func (st *DatabaseStorage) GetCountMarketPoints(userId string) (float64, float64, error) {
+func (st *DatabaseStorage) GetCountMarketPoints(userID string) (float64, float64, error) {
 	row := st.db.QueryRowContext(context.Background(),
-		"SELECT allPoints, usedPoints FROM Users WHERE id = $1", userId)
+		"SELECT allPoints, usedPoints FROM Users WHERE id = $1", userID)
 	var allPoints float64
 	var usedPoints float64
 	err := row.Scan(&allPoints, &usedPoints)
 	if err != nil {
 		return 0.0, 0.0, fmt.Errorf("error scan value from row. err:%w", err)
 	}
-
 	return allPoints, usedPoints, nil
 }
-func (st *DatabaseStorage) UseMarketPoints(userId string, withdrawOrd common.WithdrawOrder) error {
+func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.WithdrawOrder) error {
 	tx, err := st.db.Begin()
 	if err != nil {
 		return fmt.Errorf("can not create transaction UseMarketPoints. err:%w", err)
 	}
-	st.Logger.Debugf("UseMarketPointsnmae, userId:%s; value:%d;", userId, withdrawOrd)
+	st.Logger.Debugf("UseMarketPointsnmae, userID:%s; value:%d;", userID, withdrawOrd)
 
 	row := tx.QueryRowContext(context.Background(),
-		"SELECT allPoints FROM Users WHERE id = $1", userId)
+		"SELECT allPoints FROM Users WHERE id = $1", userID)
 	var allPoints float64
 	err = row.Scan(&allPoints)
 	if err != nil {
@@ -239,10 +235,11 @@ func (st *DatabaseStorage) UseMarketPoints(userId string, withdrawOrd common.Wit
 		return ErrorInsufficientFunds
 	}
 
-	query := `UPDATE Orders SET  allPoints = Orders.allPoints - $1, usedPoints= Orders.usedPoints + $1 WHERE id = $2`
+	query :=
+		`UPDATE Orders SET  allPoints = Orders.allPoints - $1, usedPoints= Orders.usedPoints + $1 WHERE id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if _, err = tx.ExecContext(ctx, query, withdrawOrd.Sum, userId); err != nil {
+	if _, err = tx.ExecContext(ctx, query, withdrawOrd.Sum, userID); err != nil {
 		errr := tx.Rollback()
 		if errr != nil {
 			return fmt.Errorf("error UseMarketPoints: err%w;And can not rollback! err:%w",
@@ -254,7 +251,8 @@ func (st *DatabaseStorage) UseMarketPoints(userId string, withdrawOrd common.Wit
 	query = `INSERT INTO Used (numer, sum, upload) VALUES ($1, $2, $3)`
 	ctxUsed, cancelUsed := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelUsed()
-	if _, err = tx.ExecContext(ctxUsed, query, withdrawOrd.Order, withdrawOrd.Sum, withdrawOrd.Processed); err != nil {
+	if _, err = tx.ExecContext(ctxUsed, query, withdrawOrd.Order,
+		withdrawOrd.Sum, withdrawOrd.Processed); err != nil {
 		errr := tx.Rollback()
 		if errr != nil {
 			return fmt.Errorf("error UseMarketPoints: err%w;And can not rollback! err:%w",
@@ -262,33 +260,31 @@ func (st *DatabaseStorage) UseMarketPoints(userId string, withdrawOrd common.Wit
 		}
 		return fmt.Errorf("tx, error while trying update used points: %w", err)
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("error with commit transactiom AddCounter. err:%w", err)
 	}
-
 	return nil
 }
 
-func (st *DatabaseStorage) UpdateUserOrder(ord common.UserOrder) error {
+func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
 	query := `UPDATE Orders SET points = $1, status = $2 WHERE id = $3`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err := st.db.ExecContext(ctx, query, ord.Ord.Accural, ord.Ord.Status, ord.IDUser); err != nil {
-		return fmt.Errorf("UpdateUserOrder, error while trying update used points: %w", err)
+		return fmt.Errorf("updateUserOrder, error while trying update used points: %w", err)
 	}
-
 	return nil
 }
 
-func (st *DatabaseStorage) GetAllUserOrders(userId string) ([]common.PaymentOrder, error) {
+func (st *DatabaseStorage) GetAllUserOrders(userID string) ([]common.PaymentOrder, error) {
 	var res []common.PaymentOrder
 	rows, err := st.db.QueryContext(context.Background(),
-		"SELECT numer, status, points, upload FROM Orders WHERE user = $1", userId)
+		"SELECT numer, status, points, upload FROM Orders WHERE user = $1", userID)
 	if err != nil {
-		return res, fmt.Errorf("Problem GetAllUserOrders. err:%w", err)
+		return res, fmt.Errorf("problem GetAllUserOrders. err:%w", err)
 	}
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		userOrd := common.PaymentOrder{}
 		err := rows.Scan(&userOrd.Number, &userOrd.Status, &userOrd.Accural, &userOrd.Uploaded_at)
@@ -297,15 +293,20 @@ func (st *DatabaseStorage) GetAllUserOrders(userId string) ([]common.PaymentOrde
 		}
 		res = append(res, userOrd)
 	}
+	err = rows.Err()
+	if err != nil {
+		st.Logger.Warnf("error rows. err:%s", err)
+	}
 	return res, nil
 }
-func (st *DatabaseStorage) GetAllWithdrawls(userId string) ([]common.WithdrawOrder, error) {
+func (st *DatabaseStorage) GetAllWithdrawls(userID string) ([]common.WithdrawOrder, error) {
 	var res []common.WithdrawOrder
 	rows, err := st.db.QueryContext(context.Background(),
-		"SELECT numer, sum, upload FROM Used WHERE user = $1", userId)
+		"SELECT numer, sum, upload FROM Used WHERE user = $1", userID)
 	if err != nil {
-		return res, fmt.Errorf("Problem GetAllUserOrders. err:%w", err)
+		return res, fmt.Errorf("problem GetAllUserOrders. err:%w", err)
 	}
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		wird := common.WithdrawOrder{}
 		err := rows.Scan(&wird.Order, &wird.Sum, &wird.Processed)
@@ -314,6 +315,9 @@ func (st *DatabaseStorage) GetAllWithdrawls(userId string) ([]common.WithdrawOrd
 		}
 		res = append(res, wird)
 	}
+	err = rows.Err()
+	if err != nil {
+		st.Logger.Warnf("error rows. err:%s", err)
+	}
 	return res, nil
-
 }

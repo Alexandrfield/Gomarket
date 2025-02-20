@@ -44,7 +44,8 @@ func main() {
 	if err != nil {
 		logger.Fatalf("cant init storage %s", err)
 	}
-	communicatorExternalService := market.CommunicatorAddServer{Logger: logger, Storage: storageServer, AddresMarket: config.AccurakSystemAddres}
+	communicatorExternalService := market.CommunicatorAddServer{Logger: logger,
+		Storage: storageServer, AddresMarket: config.AccurakSystemAddres}
 	commChan := communicatorExternalService.Init()
 	server := handle.ServiceHandler{Logger: logger, Storage: storageServer, BufferOrder: commChan}
 	server.Init()
