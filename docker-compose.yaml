@@ -11,8 +11,6 @@ services:
       PGDATA: /data
     ports:
       - "5430:5432"
-    volumes:
-      - ./data
     deploy:
       resources:
         limits:

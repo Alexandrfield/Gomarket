@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,6 +31,8 @@ func main() {
 		}
 	}()
 
+	fmt.Printf("Start app test print.")
+	log.Printf("Start app test log.")
 	logger.Infof("Start app.")
 	config, err := server.ParseFlags()
 	if err != nil {

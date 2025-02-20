@@ -50,18 +50,21 @@ type DatabaseStorage struct {
 }
 
 func (st *DatabaseStorage) createTable(ctx context.Context) error {
+	st.Logger.Debugf("create table: Users")
 	const queryUsers = `CREATE TABLE if NOT EXISTS Users (id int PRIMARY KEY, 
 	login text, passwd text, allPoints double precision, usedPoints double precision)`
 	if _, err := st.db.ExecContext(ctx, queryUsers); err != nil {
 		return fmt.Errorf("error while trying to create table Users: %w", err)
 	}
+	st.Logger.Debugf("create table: Orders")
 	const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id int PRIMARY KEY, 
-	numer bigint, user int, status text, points double precision, upload timestamp)`
+	numer int, polsak int, status text, points double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryOrders); err != nil {
 		return fmt.Errorf("error while trying to create table Orders: %w", err)
 	}
+	st.Logger.Debugf("create table: Used")
 	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id int PRIMARY KEY, 
-	numer bigint, sum double precision, upload timestamp)`
+	numer int, sum double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
 		return fmt.Errorf("error while trying to create table Used: %w", err)
 	}
@@ -174,7 +177,7 @@ func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 		return fmt.Errorf("can not create transaction SetOrder. err:%w", err)
 	}
 	st.Logger.Debugf("SetOrder ord:%s;", ord)
-	query := `INSERT INTO Orders (numer, user, status, points, upload) VALUES ($1, $2, $3, $4, %5)`
+	query := `INSERT INTO Orders (numer, polsak, status, points, upload) VALUES ($1, $2, $3, $4, %5)`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err := tx.ExecContext(ctx, query, ord.Ord.Number, ord.IDUser,
@@ -191,7 +194,7 @@ func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 func (st *DatabaseStorage) GetOrder(orderNum string) (*common.UserOrder, error) {
 	var userOrd common.UserOrder
 	row := st.db.QueryRowContext(context.Background(),
-		"SELECT  numer, user, status, points, upload FROM Orders WHERE numer = $1", orderNum)
+		"SELECT  numer, polsak, status, points, upload FROM Orders WHERE numer = $1", orderNum)
 	err := row.Scan(&userOrd.Ord.Number, &userOrd.IDUser, &userOrd.Ord.Status,
 		&userOrd.Ord.Accural, &userOrd.Ord.Uploaded_at)
 	if err != nil {
@@ -280,7 +283,7 @@ func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
 func (st *DatabaseStorage) GetAllUserOrders(userID string) ([]common.PaymentOrder, error) {
 	var res []common.PaymentOrder
 	rows, err := st.db.QueryContext(context.Background(),
-		"SELECT numer, status, points, upload FROM Orders WHERE user = $1", userID)
+		"SELECT numer, status, points, upload FROM Orders WHERE polsak = $1", userID)
 	if err != nil {
 		return res, fmt.Errorf("problem GetAllUserOrders. err:%w", err)
 	}
@@ -302,7 +305,7 @@ func (st *DatabaseStorage) GetAllUserOrders(userID string) ([]common.PaymentOrde
 func (st *DatabaseStorage) GetAllWithdrawls(userID string) ([]common.WithdrawOrder, error) {
 	var res []common.WithdrawOrder
 	rows, err := st.db.QueryContext(context.Background(),
-		"SELECT numer, sum, upload FROM Used WHERE user = $1", userID)
+		"SELECT numer, sum, upload FROM Used WHERE polsak = $1", userID)
 	if err != nil {
 		return res, fmt.Errorf("problem GetAllUserOrders. err:%w", err)
 	}
