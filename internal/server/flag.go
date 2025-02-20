@@ -24,6 +24,6 @@ func ParseFlags() (Config, error) {
 	if envAccurakSystemAddres := os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); envAccurakSystemAddres != "" {
 		config.AccurakSystemAddres = envAccurakSystemAddres
 	}
-
+	config.DatabaseURI = "host=localhost user=gopher password=qwerty dbname=postgres_db sslmode=disable"
 	return config, nil
 }

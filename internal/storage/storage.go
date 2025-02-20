@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/Alexandrfield/Gomarket/internal/common"
 )
 
@@ -31,7 +33,13 @@ type StorageCommunicator interface {
 
 func GetStorage(config Config, logger common.Logger) (StorageCommunicator, error) {
 	t := DatabaseStorage{Logger: logger}
-	t.Start(config.DatabasURI)
+	fmt.Printf("teest 1 \n")
+	err := t.Start(config.DatabasURI)
+	if err != nil {
+		return nil, fmt.Errorf("problem start DB. err:%w", err)
+	}
+	fmt.Printf("teest 2 \n")
+	fmt.Printf("teest Ping ->>> %v", t.PingDatabase())
 	return &t, nil
 }
 
