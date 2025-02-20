@@ -2,11 +2,12 @@ package handle
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/Alexandrfield/Gomarket/internal/common"
+	"github.com/Alexandrfield/Gomarket/internal/server"
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 )
 
@@ -19,7 +20,7 @@ type ServiceHandler struct {
 	Logger      common.Logger
 	Storage     storage.StorageCommunicator
 	authServer  AuthorizationServer
-	BufferOrder chan common.UsertOrder
+	BufferOrder chan common.UserOrder
 }
 
 func (han *ServiceHandler) Init() {
@@ -69,7 +70,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		http.Error(res, err.Error(), http.StatusConflict)
 		return
 	}
-	_, err = han.Storage.CreateNewUser(cred.Login, cred.Password)
+	idUser, err := han.Storage.CreateNewUser(cred.Login, server.ComplicatedPasswd(cred.Password))
 	if err != nil {
 		han.Logger.Warnf("Problem create new user Login:%s; in system. err:%s", cred.Login, err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -77,7 +78,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	}
 
 	// Login user
-	token, err := han.authServer.BuildJWTString()
+	token, err := han.authServer.BuildJWTString(idUser)
 	if err != nil {
 		han.Logger.Warnf("Problem BuildJWTString. err:%s", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -107,12 +108,21 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if isExist {
-		http.Error(res, err.Error(), http.StatusConflict)
+	if !isExist {
+		http.Error(res, err.Error(), http.StatusUnauthorized)
 		return
 	}
-
-	token, err := han.authServer.BuildJWTString()
+	idUs, err := han.Storage.AytorizationUser(cred.Login, server.ComplicatedPasswd(cred.Password))
+	if err != nil {
+		if errors.Is(err, storage.ErrPasswordNotValidForUser) {
+			http.Error(res, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		han.Logger.Warnf("Problem BuildJWTString. err:%s", err)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	token, err := han.authServer.BuildJWTString(idUs)
 	if err != nil {
 		han.Logger.Warnf("Problem BuildJWTString. err:%s", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -138,23 +148,23 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
-	st, err := han.Storage.GetOrderStatus(string(idUser), string(idOrder))
+	userOrder := common.CreatUserOrder(string(idUser), string(idOrder))
+	err = han.Storage.SetOrder(userOrder)
 	if err != nil {
-		han.Logger.Warnf("issue get order status %w", err)
+		if errors.Is(err, storage.ErrOrderLoadedAnotherUser) {
+			res.WriteHeader(http.StatusConflict)
+			return
+		}
+		if errors.Is(err, storage.ErrOrderLoaded) {
+			res.WriteHeader(http.StatusOK)
+			return
+		}
 	}
-
-	switch st {
-	case "empty":
-		res.WriteHeader(http.StatusAccepted)
-	case "busy":
-		res.WriteHeader(http.StatusConflict)
-		return
-	default:
-		res.WriteHeader(http.StatusOK)
-	}
-	han.BufferOrder <- common.CreatUserOrder(strconv.Itoa(idUser), string(data))
+	res.WriteHeader(http.StatusAccepted)
+	han.BufferOrder <- common.CreatUserOrder(idUser, string(data))
 	res.Header().Set("Content-Type", "application/json")
 }
+
 func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request) {
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)

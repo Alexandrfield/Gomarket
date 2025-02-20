@@ -40,7 +40,7 @@ func main() {
 		config.DatabaseURI, config.ServerAddress, config.AccurakSystemAddres)
 
 	storeConfig := storage.Config{DatabasURI: config.DatabaseURI}
-	storageServer, err := storage.GetStorage(storeConfig)
+	storageServer, err := storage.GetStorage(storeConfig, logger)
 	if err != nil {
 		logger.Fatalf("cant init storage %s", err)
 	}

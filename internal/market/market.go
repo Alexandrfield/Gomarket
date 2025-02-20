@@ -15,27 +15,27 @@ type CommunicatorAddServer struct {
 	Logger       common.Logger
 	Storage      storage.StorageCommunicator
 	done         chan struct{}
-	bufferOrder  chan common.UsertOrder
+	bufferOrder  chan common.UserOrder
 	client       *http.Client
 	AddresMarket string
 }
 
-func (communicator *CommunicatorAddServer) Init() chan common.UsertOrder {
-	communicator.bufferOrder = make(chan common.UsertOrder, 10)
+func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
+	communicator.bufferOrder = make(chan common.UserOrder, 10)
 	communicator.client = &http.Client{
 		Timeout: time.Second * 5, // интервал ожидания: 1 секунда
 	}
 
 	return communicator.bufferOrder
 }
-func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order common.UsertOrder) {
+func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order common.UserOrder) {
 	waitsTime := []int{1, 2, 3, 4, 5}
 	for _, val := range waitsTime {
 		ans, err := communicator.sendToAddServer(order)
 		if err != nil {
 			communicator.Logger.Errorf("sendToAddServer err:%s", err)
 		}
-		temp := common.UsertOrder{IdUser: order.IdUser, Ord: ans}
+		temp := common.UserOrder{IDUser: order.IDUser, Ord: ans}
 		communicator.Storage.UpdateUserOrder(temp)
 		if ans.Status == common.OrderStatusProcessing || ans.Status == common.OrderStatusInvalid {
 			break
@@ -44,7 +44,7 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order common.
 	}
 
 }
-func (communicator *CommunicatorAddServer) sendToAddServer(order common.UsertOrder) (common.PaymentOrder, error) {
+func (communicator *CommunicatorAddServer) sendToAddServer(order common.UserOrder) (common.PaymentOrder, error) {
 
 	var ord common.PaymentOrder
 	url := fmt.Sprintf("http://%s/api/orders/%s", communicator.AddresMarket, order.Ord.Number)
@@ -69,12 +69,10 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order common.UsertOrd
 			communicator.Logger.Warnf("resp.Body.Close() err: %s\n", err)
 		}
 	}()
-	ans := make([]byte, 4000)
-	n, err := io.Copy(ans, resp.Body)
+	ans, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ord, fmt.Errorf("error reading body. err:%w", err)
 	}
-	ans = ans[:n]
 	if err := json.Unmarshal(ans, &ord); err != nil {
 		return ord, fmt.Errorf("Error umarshal response. err:%s", err.Error())
 	}
