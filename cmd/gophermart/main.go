@@ -46,7 +46,7 @@ func main() {
 	}
 	communicatorExternalService := market.CommunicatorAddServer{Logger: logger, Storage: storageServer, AddresMarket: config.AccurakSystemAddres}
 	commChan := communicatorExternalService.Init()
-	server := handle.ServiceHandler{Storage: storageServer, BufferOrder: commChan}
+	server := handle.ServiceHandler{Logger: logger, Storage: storageServer, BufferOrder: commChan}
 	server.Init()
 	router := chi.NewRouter()
 	router.Post(`/api/user/register/`, server.Rgistarte())
