@@ -23,6 +23,6 @@ func ParseFlags() (Config, error) {
 	flag.StringVar(&config.AccurakSystemAddres, "r", "localhost:8091",
 		"addres for connect accures sysem [default:localhost:8091]") // RUN_ADDRESS
 	flag.Parse()
-	// config.DatabaseURI = "host=localhost port=5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
+	config.DatabaseURI = "host=localhost port=5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
 	return config, nil
 }

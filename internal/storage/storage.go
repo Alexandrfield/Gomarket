@@ -51,19 +51,19 @@ type DatabaseStorage struct {
 
 func (st *DatabaseStorage) createTable(ctx context.Context) error {
 	st.Logger.Debugf("create table: Users")
-	const queryUsers = `CREATE TABLE if NOT EXISTS Users (id int PRIMARY KEY, 
+	const queryUsers = `CREATE TABLE if NOT EXISTS Users (id SERIAL PRIMARY KEY, 
 	login text, passwd text, allPoints double precision, usedPoints double precision)`
 	if _, err := st.db.ExecContext(ctx, queryUsers); err != nil {
 		return fmt.Errorf("error while trying to create table Users: %w", err)
 	}
 	st.Logger.Debugf("create table: Orders")
-	const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id int PRIMARY KEY, 
+	const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id SERIAL PRIMARY KEY, 
 	numer int, polsak int, status text, points double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryOrders); err != nil {
 		return fmt.Errorf("error while trying to create table Orders: %w", err)
 	}
 	st.Logger.Debugf("create table: Used")
-	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id int PRIMARY KEY, 
+	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id SERIAL PRIMARY KEY, 
 	numer int, sum double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
 		return fmt.Errorf("error while trying to create table Used: %w", err)
@@ -109,9 +109,9 @@ func (st *DatabaseStorage) CreateNewUser(login string, password string) (string,
 	if err != nil {
 		return "", fmt.Errorf("can not create transaction. err:%w", err)
 	}
-	st.Logger.Debugf("CreateNewUserю login:%s;", login)
+	st.Logger.Debugf("CreateNewUser login:%s;", login)
 
-	query := `INSERT INTO User (login, passwd, allPoints, usedPoints) VALUES ($1, $2, $3, $4)`
+	query := `INSERT INTO Users (login, passwd, allPoints, usedPoints) VALUES ($1, $2, $3, $4)`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err := tx.ExecContext(ctx, query, login, password, 0.0, 0.0); err != nil {
@@ -155,7 +155,8 @@ func (st *DatabaseStorage) IsUserLoginExist(login string) (bool, error) {
 	var userID int
 	err := row.Scan(&userID)
 	if err != nil {
-		return false, fmt.Errorf("error scan value from row. err:%w", err)
+		return false, nil
+		//return false, fmt.Errorf("error scan value from row. err:%w", err)
 	}
 	return true, nil
 }
