@@ -46,23 +46,24 @@ func main() {
 	if err != nil {
 		logger.Fatalf("cant init storage %s", err)
 	}
+	logger.Infof("init communicator ... ")
 	communicatorExternalService := market.CommunicatorAddServer{Logger: logger,
 		Storage: storageServer, AddresMarket: config.AccurakSystemAddres}
 	commChan := communicatorExternalService.Init()
 	server := handle.ServiceHandler{Logger: logger, Storage: storageServer, BufferOrder: commChan}
 	server.Init()
+	logger.Infof("init route ... ")
 	router := chi.NewRouter()
-	router.Post(`/api/user/register/`, server.Rgistarte())
-	router.Post(`/api/user/login/`, server.Login())
-	router.Post(`/api/user/orders/`, server.Orders())
-	router.Get(`/api/user/orders/`, server.GetOrders())
-	router.Post(`/api/user/register/`, server.Rgistarte())
-	router.Get(`/api/user/balance/`, server.GetBalance())
+	router.Post(`/api/user/register`, server.Rgistarte())
+	router.Post(`/api/user/login`, server.Login())
+	router.Post(`/api/user/orders`, server.Orders())
+	router.Get(`/api/user/orders`, server.GetOrders())
+	router.Get(`/api/user/balance`, server.GetBalance())
 
-	router.Post(`/api/user/withdraw/`, server.Withdraw())
-	router.Get(`/api/user/withdrawals/`, server.Withdrawals())
+	router.Post(`/api/user/withdraw`, server.Withdraw())
+	router.Get(`/api/user/withdrawals`, server.Withdrawals())
 
-	logger.Info("Server started")
+	logger.Info("Server started. config.ServerAddress:%s", config.ServerAddress)
 	go func() {
 		err = http.ListenAndServe(config.ServerAddress, router)
 		if err != nil {

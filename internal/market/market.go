@@ -25,7 +25,7 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 	communicator.client = &http.Client{
 		Timeout: time.Second * 5, // интервал ожидания: 1 секунда
 	}
-	communicator.processorSendToServer()
+	go communicator.processorSendToServer()
 	return communicator.bufferOrder
 }
 func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common.UserOrder) {

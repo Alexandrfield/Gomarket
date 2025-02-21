@@ -28,10 +28,12 @@ func (han *ServiceHandler) Init() {
 }
 
 func (han *ServiceHandler) Rgistarte() http.HandlerFunc {
-	return han.WithLogging(han.registarte)
+	//return han.WithLogging(han.registarte)
+	return han.registarte
 }
 func (han *ServiceHandler) Login() http.HandlerFunc {
-	return han.WithLogging(han.login)
+	//return han.WithLogging(han.login)
+	return han.login
 }
 func (han *ServiceHandler) Orders() http.HandlerFunc {
 	return han.WithLogging(han.orders)
@@ -50,6 +52,7 @@ func (han *ServiceHandler) Withdrawals() http.HandlerFunc {
 }
 
 func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request) {
+	han.Logger.Debugf("registarte")
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)
 	data = data[:n]
