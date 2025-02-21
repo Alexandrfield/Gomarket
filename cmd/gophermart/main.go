@@ -33,6 +33,23 @@ func main() {
 		}
 	}()
 	logger.Infof("Start app.")
+}
+func mainTest() {
+	fmt.Printf("Start app test print.")
+	log.Printf("Start app test log.")
+	zapLogger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatal("Cant not initializate zap logger.err:%w", err)
+	}
+	defer func() { _ = zapLogger.Sync() }()
+	logger := zapLogger.Sugar()
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Errorf("Recover. Panic occurred. err: %w", err)
+			debug.PrintStack()
+		}
+	}()
+	logger.Infof("Start app.")
 	config, err := server.ParseFlags()
 	if err != nil {
 		logger.Fatalf("issue with parse flags")
