@@ -18,6 +18,8 @@ import (
 )
 
 func main() {
+	fmt.Printf("Start app test print.")
+	log.Printf("Start app test log.")
 	zapLogger, err := zap.NewDevelopment()
 	if err != nil {
 		log.Fatal("Cant not initializate zap logger.err:%w", err)
@@ -30,9 +32,6 @@ func main() {
 			debug.PrintStack()
 		}
 	}()
-
-	fmt.Printf("Start app test print.")
-	log.Printf("Start app test log.")
 	logger.Infof("Start app.")
 	config, err := server.ParseFlags()
 	if err != nil {
