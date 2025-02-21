@@ -170,7 +170,7 @@ func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 				return ErrOrderLoaded
 			}
 		} else {
-			return errors.New("Not valid data. existOrd")
+			return errors.New("not valid data. existOrd")
 		}
 	}
 	tx, err := st.db.Begin()

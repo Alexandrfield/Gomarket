@@ -6,49 +6,20 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 
+	"github.com/Alexandrfield/Gomarket/internal/common"
 	"github.com/Alexandrfield/Gomarket/internal/handle"
 	"github.com/Alexandrfield/Gomarket/internal/market"
 	"github.com/Alexandrfield/Gomarket/internal/server"
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 )
 
 func main() {
 	fmt.Printf("Start app test print.")
 	log.Printf("Start app test log.")
-	zapLogger, err := zap.NewDevelopment()
-	if err != nil {
-		log.Fatal("Cant not initializate zap logger.err:%w", err)
-	}
-	defer func() { _ = zapLogger.Sync() }()
-	logger := zapLogger.Sugar()
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Errorf("Recover. Panic occurred. err: %w", err)
-			debug.PrintStack()
-		}
-	}()
-	logger.Infof("Start app.")
-}
-func mainTest() {
-	fmt.Printf("Start app test print.")
-	log.Printf("Start app test log.")
-	zapLogger, err := zap.NewDevelopment()
-	if err != nil {
-		log.Fatal("Cant not initializate zap logger.err:%w", err)
-	}
-	defer func() { _ = zapLogger.Sync() }()
-	logger := zapLogger.Sugar()
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Errorf("Recover. Panic occurred. err: %w", err)
-			debug.PrintStack()
-		}
-	}()
+	logger := common.GetComponentLogger()
 	logger.Infof("Start app.")
 	config, err := server.ParseFlags()
 	if err != nil {
@@ -80,7 +51,7 @@ func mainTest() {
 	router.Post(`/api/user/withdraw`, server.Withdraw())
 	router.Get(`/api/user/withdrawals`, server.Withdrawals())
 
-	logger.Info("Server started. config.ServerAddress:%s", config.ServerAddress)
+	logger.Infof("Server started. config.ServerAddress:%s", config.ServerAddress)
 	go func() {
 		err = http.ListenAndServe(config.ServerAddress, router)
 		if err != nil {
