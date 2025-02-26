@@ -182,7 +182,7 @@ func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err := tx.ExecContext(ctx, query, ord.Ord.Number, ord.IDUser,
-		ord.Ord.Status, ord.Ord.Accural, ord.Ord.Uploaded_at); err != nil {
+		ord.Ord.Status, ord.Ord.Accural, ord.Ord.UploadedAt); err != nil {
 		return fmt.Errorf("tx, error while trying to ord. err: %w", err)
 	}
 	err = tx.Commit()
@@ -197,7 +197,7 @@ func (st *DatabaseStorage) GetOrder(orderNum string) (*common.UserOrder, error) 
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT  numer, polsak, status, points, upload FROM Orders WHERE numer = $1", orderNum)
 	err := row.Scan(&userOrd.Ord.Number, &userOrd.IDUser, &userOrd.Ord.Status,
-		&userOrd.Ord.Accural, &userOrd.Ord.Uploaded_at)
+		&userOrd.Ord.Accural, &userOrd.Ord.UploadedAt)
 	if err != nil {
 		return &userOrd, fmt.Errorf("error scan value from row. err:%w", err)
 	}
@@ -291,7 +291,7 @@ func (st *DatabaseStorage) GetAllUserOrders(userID string) ([]common.PaymentOrde
 	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		userOrd := common.PaymentOrder{}
-		err := rows.Scan(&userOrd.Number, &userOrd.Status, &userOrd.Accural, &userOrd.Uploaded_at)
+		err := rows.Scan(&userOrd.Number, &userOrd.Status, &userOrd.Accural, &userOrd.UploadedAt)
 		if err != nil {
 			st.Logger.Warnf("error scan value from row. err:%s", err)
 		}

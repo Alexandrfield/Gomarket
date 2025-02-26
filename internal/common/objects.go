@@ -16,7 +16,7 @@ type UserOrder struct {
 
 func CreatUserOrder(idUser string, idOrder string) UserOrder {
 	return UserOrder{IDUser: idUser, Ord: PaymentOrder{Number: idOrder,
-		Uploaded_at: time.Now(), Status: OrderStatusProcessing}}
+		UploadedAt: time.Now(), Status: OrderStatusProcessing}}
 }
 
 type WithdrawOrder struct {
