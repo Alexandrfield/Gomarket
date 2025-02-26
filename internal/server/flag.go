@@ -7,22 +7,26 @@ import (
 
 func ParseFlags() (Config, error) {
 	config := Config{}
-	flag.StringVar(&config.ServerAddress, "a", "localhost:8080",
-		"address and port to run server [default:localhost:8080]") // RUN_ADDRESS
-	flag.StringVar(&config.DatabaseURI, "d", "",
-		"uri for database [default:]") // RUN_ADDRESS
-	flag.StringVar(&config.AccurakSystemAddres, "r", "localhost:8091",
-		"addres for connect accures sysem [default:localhost:8091]") // RUN_ADDRESS
+	var tempServerAdderess string
+	if tempServerAdderess = os.Getenv("RUN_ADDRESS"); tempServerAdderess != "" {
+		config.ServerAddress = tempServerAdderess
+	}
+	var tempDatabaseURI string
+	if tempDatabaseURI = os.Getenv("DATABASE_URI"); tempDatabaseURI != "" {
+		config.DatabaseURI = tempDatabaseURI
+	}
+	var tempAccurakSystemAddres string
+	if tempAccurakSystemAddres = os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); tempAccurakSystemAddres != "" {
+		config.AccurakSystemAddres = tempAccurakSystemAddres
+	}
+
+	flag.StringVar(&config.ServerAddress, "a", tempServerAdderess,
+		"address and port to run server ")
+	flag.StringVar(&config.DatabaseURI, "d", tempDatabaseURI,
+		"uri for database [default:]")
+	flag.StringVar(&config.AccurakSystemAddres, "r", tempAccurakSystemAddres,
+		"addres for connect accures sysem ")
 	flag.Parse()
-	if envServerAdderess := os.Getenv("RUN_ADDRESS"); envServerAdderess != "" {
-		config.ServerAddress = envServerAdderess
-	}
-	if envDatabaseURI := os.Getenv("DATABASE_URI"); envDatabaseURI != "" {
-		config.DatabaseURI = envDatabaseURI
-	}
-	if envAccurakSystemAddres := os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); envAccurakSystemAddres != "" {
-		config.AccurakSystemAddres = envAccurakSystemAddres
-	}
-	config.DatabaseURI = "host=localhost port=5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
+
 	return config, nil
 }
