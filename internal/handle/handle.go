@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Alexandrfield/Gomarket/internal/common"
 	"github.com/Alexandrfield/Gomarket/internal/server"
@@ -92,6 +93,16 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
+
+	res.SetCookie(
+		"Authorization",
+		token,
+		int(time.Now().Add(60000)),
+		"/",
+		"",
+		false,
+		true,
+	)
 	han.Logger.Debugf("Registrate new user. res:%s", res)
 	res.WriteHeader(http.StatusOK)
 }
