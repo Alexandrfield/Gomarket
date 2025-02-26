@@ -92,6 +92,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
+	han.Logger.Debugf("Registrate new user. res:%s", res)
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
