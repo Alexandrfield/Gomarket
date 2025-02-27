@@ -99,6 +99,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	}
 
 	han.Logger.Debugf("set token in responce %s", token)
+	fmt.Printf("set token in responce %x", token)
 	res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	han.Logger.Debugf("Registrate new user. res:%s", res)
 	res.WriteHeader(http.StatusOK)
