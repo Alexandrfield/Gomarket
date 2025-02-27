@@ -29,6 +29,7 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 	return communicator.bufferOrder
 }
 func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common.UserOrder) {
+	communicator.Logger.Errorf("proccesOrderToAddServer order:%s", *order)
 	waitsTime := []int{1, 2, 3, 4, 5}
 	for _, val := range waitsTime {
 		ans, err := communicator.sendToAddServer(order)

@@ -92,6 +92,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	}
 
 	res.Header().Set("Authorization", token)
+	fmt.Printf("--->%x", token)
 	res.Header().Set("Content-Type", "application/json")
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
 	_, err = res.Write(accesJSON)
@@ -147,6 +148,7 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	fmt.Printf("--->%x", token)
 	res.Header().Set("Authorization", token)
 	res.Header().Set("Content-Type", "application/json")
 	//res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -169,16 +171,17 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)
 	idOrder := data[:n]
-	han.Logger.Debugf("body:%v", data)
+	han.Logger.Debugf("body:%v", idOrder)
 
 	tokenString := req.Header.Get("Authorization")
-	han.Logger.Debugf("tokenString:%v", tokenString)
+	fmt.Printf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
 
 	userOrder := common.CreatUserOrder(idUser, string(idOrder))
+	han.Logger.Debugf("userOrder--> %s", userOrder)
 	err = han.Storage.SetOrder(&userOrder)
 	if err != nil {
 		if errors.Is(err, storage.ErrOrderLoadedAnotherUser) {
