@@ -93,7 +93,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		han.Logger.Debugf("issue with write %w", err)
 	}
 
-	res.Header().Add("Authorization", token)
+	res.Header().Set("Authorization", token)
 	han.Logger.Debugf("Registrate new user. res:%s", res)
 	res.WriteHeader(http.StatusOK)
 }
@@ -135,6 +135,7 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Authorization", token)
 	_, err = res.Write([]byte(token))
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
