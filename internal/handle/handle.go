@@ -96,7 +96,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 
 	han.Logger.Debugf("set token in responce %s", token)
 	res.Header().Set("Authorization", token)
-	c.SetCookie(
+	res.SetCookie(
 		"Authorization",
 		token,
 		int(time.Now().Add(100000)),
