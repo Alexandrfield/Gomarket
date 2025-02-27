@@ -51,6 +51,10 @@ func (han *ServiceHandler) Withdrawals() http.HandlerFunc {
 	return han.WithLogging(han.getWithdrawals)
 }
 
+type LoginResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
 func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("registarte")
 	data := make([]byte, 10000)
@@ -88,7 +92,8 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	_, err = res.Write([]byte(token))
+	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
+	_, err = res.Write(accesJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
@@ -137,11 +142,11 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Content-Type", "application/json")
 	res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	_, err = res.Write([]byte(token))
+	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
+	_, err = res.Write(accesJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
-	res.Header().Add("Authorization", token)
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
@@ -151,6 +156,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
+	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
@@ -180,6 +186,7 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
+	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
@@ -220,6 +227,7 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
+	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
@@ -249,6 +257,7 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
+	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
@@ -277,6 +286,7 @@ func (han *ServiceHandler) getWithdrawals(res http.ResponseWriter, req *http.Req
 	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
+	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
