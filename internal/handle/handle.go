@@ -102,6 +102,14 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	fmt.Printf("set token in responce %x", token)
 	res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	han.Logger.Debugf("Registrate new user. res:%s", res)
+	http.SetCookie(res, &http.Cookie{
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		// Uncomment below for HTTPS:
+		// Secure: true,
+		Name:  "jwt",
+		Value: token,
+	})
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
@@ -148,6 +156,14 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
+	http.SetCookie(res, &http.Cookie{
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		// Uncomment below for HTTPS:
+		// Secure: true,
+		Name:  "jwt",
+		Value: token,
+	})
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
