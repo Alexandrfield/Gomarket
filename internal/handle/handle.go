@@ -91,6 +91,7 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		return
 	}
 
+	res.Header().Set("Authorization", token)
 	res.Header().Set("Content-Type", "application/json")
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
 	_, err = res.Write(accesJSON)
@@ -98,9 +99,6 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		han.Logger.Debugf("issue with write %w", err)
 	}
 
-	han.Logger.Debugf("set token in responce %s", token)
-	fmt.Printf("set token in responce %x", token)
-	res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	han.Logger.Debugf("Registrate new user. res:%s", res)
 	http.SetCookie(res, &http.Cookie{
 		HttpOnly: true,
@@ -149,8 +147,9 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Authorization", token)
 	res.Header().Set("Content-Type", "application/json")
-	res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	//res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
 	_, err = res.Write(accesJSON)
 	if err != nil {
