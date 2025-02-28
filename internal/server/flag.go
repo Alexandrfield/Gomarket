@@ -30,9 +30,8 @@ func ParseFlags() (Config, error) {
 		"addres for connect accures sysem ")
 	flag.Parse()
 
+	// костыль для тестов. Наткнулся на ошибку, когда localhost неправильно резоливлся в сети докера
 	res := strings.Split(config.AccurakSystemAddres, ":")
-	fmt.Printf("old:config.AccurakSystemAddres: %s\n", config.AccurakSystemAddres)
 	config.AccurakSystemAddres = fmt.Sprintf("127.0.0.1:%s", res[2])
-	fmt.Printf("new:config.AccurakSystemAddres: %s\n", config.AccurakSystemAddres)
 	return config, nil
 }

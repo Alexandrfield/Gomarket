@@ -53,7 +53,6 @@ func (han *ServiceHandler) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		//tokenString = tokenString[len("Bearer "):]
 
 		isValidToken, err := han.authServer.CheckToken(tokenString)
 		if err != nil {

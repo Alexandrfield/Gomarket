@@ -28,11 +28,9 @@ func (han *ServiceHandler) Init() {
 }
 
 func (han *ServiceHandler) Rgistarte() http.HandlerFunc {
-	//return han.WithLogging(han.registarte)
 	return han.registarte
 }
 func (han *ServiceHandler) Login() http.HandlerFunc {
-	//return han.WithLogging(han.login)
 	return han.login
 }
 func (han *ServiceHandler) Orders() http.HandlerFunc {
