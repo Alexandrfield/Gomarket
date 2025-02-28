@@ -195,7 +195,7 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	han.Logger.Warnf("userOrders--> %s", userOrders)
+	han.Logger.Infof("userOrders--> %s", userOrders)
 	ordersJSON, err := json.Marshal(userOrders)
 	if err != nil {
 		han.Logger.Debugf("issue with Marshal obj. err: %w", err)
