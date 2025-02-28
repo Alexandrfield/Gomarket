@@ -219,13 +219,12 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 }
 
 func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request) {
+	han.Logger.Debugf("getBalance.")
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)
 	data = data[:n]
-	han.Logger.Debugf("body:%v", data)
 
 	tokenString := req.Header.Get("Authorization")
-	han.Logger.Debugf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
@@ -237,8 +236,8 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	ordersJSON := fmt.Sprintf("{\"current\":%f, \"withdrawn\":%f}", currentBalance, allPoints)
+	han.Logger.Debugf("ordersJSON: %s", ordersJSON)
 	_, err = res.Write([]byte(ordersJSON))
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
