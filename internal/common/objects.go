@@ -6,7 +6,7 @@ type PaymentOrder struct {
 	UploadedAt time.Time `json:"uploaded_at,omitempty"`
 	Number     string    `json:"number,omitempty"`
 	Status     string    `json:"status,omitempty"`
-	Accural    int       `json:"accrual,omitempty"`
+	Accural    float64   `json:"accrual,omitempty"`
 }
 
 type UserOrder struct {
