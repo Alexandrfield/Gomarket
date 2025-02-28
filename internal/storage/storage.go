@@ -151,7 +151,7 @@ func (st *DatabaseStorage) IsUserLoginExist(login string) bool {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT id FROM Users WHERE login = $1", login)
 	var userID int
-	err = row.Scan(&userID)
+	err := row.Scan(&userID)
 	if err != nil {
 		return false
 	}
