@@ -22,7 +22,7 @@ var ErrInsufficientFunds = errors.New("not enough points for this actions")
 type StorageCommunicator interface {
 	CreateNewUser(login string, password string) (string, error)
 	AytorizationUser(login string, password string) (string, error) // return user_id
-	IsUserLoginExist(login string) (bool, error)
+	IsUserLoginExist(login string) bool
 	SetOrder(ord *common.UserOrder) error
 	GetOrder(orderNum string) (*common.UserOrder, error)
 	GetCountMarketPoints(user string) (float64, float64, error)
@@ -147,16 +147,15 @@ func (st *DatabaseStorage) AytorizationUser(login string, password string) (stri
 	}
 	return strconv.Itoa(userID), nil
 }
-func (st *DatabaseStorage) IsUserLoginExist(login string) (res bool, err error) {
+func (st *DatabaseStorage) IsUserLoginExist(login string) bool {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT id FROM Users WHERE login = $1", login)
 	var userID int
 	err = row.Scan(&userID)
 	if err != nil {
-		return res, fmt.Errorf("error scan value from row. err:%w", err)
+		return false
 	}
-	res = true
-	return
+	return true
 }
 func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 	existOrd, err := st.GetOrder(ord.Ord.Number)
