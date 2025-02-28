@@ -56,13 +56,13 @@ func (st *DatabaseStorage) createTable(ctx context.Context) error {
 	}
 	st.Logger.Debugf("create table: Orders")
 	const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id SERIAL PRIMARY KEY, 
-	numer int, polsak int, status text, points double precision, upload timestamp)`
+	numer bigint, polsak int, status text, points double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryOrders); err != nil {
 		return fmt.Errorf("error while trying to create table Orders: %w", err)
 	}
 	st.Logger.Debugf("create table: Used")
 	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id SERIAL PRIMARY KEY, 
-	numer int, polsak int, sum double precision, upload timestamp)`
+	numer bigint, polsak int, sum double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
 		return fmt.Errorf("error while trying to create table Used: %w", err)
 	}

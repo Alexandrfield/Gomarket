@@ -171,6 +171,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusOK)
 			return
 		}
+		res.WriteHeader(http.StatusUnprocessableEntity)
 	}
 	res.WriteHeader(http.StatusAccepted)
 	han.BufferOrder <- userOrder
