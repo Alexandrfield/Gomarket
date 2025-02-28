@@ -237,6 +237,7 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 }
 
 func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Request) {
+	han.Logger.Debugf("withdrawBalance.")
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)
 	data = data[:n]
@@ -253,10 +254,11 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	han.Logger.Debugf("withdrawBalanceidUser:%d; withdrawOrd:%s", idUser, withdrawOrd)
 	err = han.Storage.UseMarketPoints(idUser, &withdrawOrd)
 	// TODO: обработать ошибки для правильных ответов
 	if err != nil {
-		han.Logger.Warnf("issue get order status %w", err)
+		han.Logger.Warnf("withdrawBalanceidUser.issue get order status %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
