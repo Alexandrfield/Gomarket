@@ -205,6 +205,7 @@ func (st *DatabaseStorage) GetOrder(orderNum string) (*common.UserOrder, error) 
 func (st *DatabaseStorage) GetCountMarketPoints(userID string) (float64, float64, error) {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT allPoints, usedPoints FROM Users WHERE id = $1", userID)
+	fmt.Printf(">>>%s\n", row)
 	var allPoints float64
 	var usedPoints float64
 	err := row.Scan(&allPoints, &usedPoints)
@@ -238,7 +239,7 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 	}
 
 	query :=
-		`UPDATE Orders SET  allPoints = Orders.allPoints - $1, usedPoints= Orders.usedPoints + $1 WHERE id = $2`
+		`UPDATE Users SET allPoints = Orders.allPoints - $1, usedPoints= Orders.usedPoints + $1 WHERE id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err = tx.ExecContext(ctx, query, withdrawOrd.Sum, userID); err != nil {
@@ -270,11 +271,34 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 }
 
 func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
+	tx, err := st.db.Begin()
+	if err != nil {
+		return fmt.Errorf("can not create transaction UpdateUserOrder. err:%w", err)
+	}
+
 	query := `UPDATE Orders SET points = $1, status = $2 WHERE id = $3`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if _, err := st.db.ExecContext(ctx, query, ord.Ord.Accural, ord.Ord.Status, ord.IDUser); err != nil {
-		return fmt.Errorf("updateUserOrder, error while trying update used points: %w", err)
+	if _, err := tx.ExecContext(ctx, query, ord.Ord.Accural, ord.Ord.Status, ord.IDUser); err != nil {
+		errRol := tx.Rollback()
+		if errRol != nil {
+			return fmt.Errorf("error UpdateUserOrder  (update order)err:%w; and error rollback err:%w", err, errRol)
+		}
+		return fmt.Errorf("error UpdateUserOrder. err:%w", err)
+	}
+	queryUsers := `UPDATE Users SET allPoints = Orders.allPoints + $1 WHERE id = $2`
+	ctxUsers, cancelUsers := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancelUsers()
+	if _, err := tx.ExecContext(ctxUsers, queryUsers, ord.Ord.Accural, ord.IDUser); err != nil {
+		errRol := tx.Rollback()
+		if errRol != nil {
+			return fmt.Errorf("error UpdateUserOrder (update user) err:%w; and error rollback err:%w", err, errRol)
+		}
+		return fmt.Errorf("error UpdateUserOrder. err:%w", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error with commit transactiom UpdateUserOrder. err:%w", err)
 	}
 	return nil
 }
