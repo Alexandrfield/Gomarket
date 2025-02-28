@@ -211,6 +211,7 @@ func (st *DatabaseStorage) GetCountMarketPoints(userID string) (float64, float64
 	if err != nil {
 		return 0.0, 0.0, fmt.Errorf("error scan value from row. err:%w", err)
 	}
+	fmt.Printf(">>> allPoints:%s; usedPoints:%s\n", allPoints, usedPoints)
 	return allPoints, usedPoints, nil
 }
 func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.WithdrawOrder) error {
