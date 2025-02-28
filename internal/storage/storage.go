@@ -239,7 +239,7 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 	}
 
 	query :=
-		`UPDATE Users SET allPoints = Orders.allPoints - $1, usedPoints= Orders.usedPoints + $1 WHERE id = $2`
+		`UPDATE Users SET allPoints = Users.allPoints - $1, usedPoints= Users.usedPoints + $1 WHERE id = $2`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err = tx.ExecContext(ctx, query, withdrawOrd.Sum, userID); err != nil {
@@ -284,9 +284,9 @@ func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
 		if errRol != nil {
 			return fmt.Errorf("error UpdateUserOrder  (update order)err:%w; and error rollback err:%w", err, errRol)
 		}
-		return fmt.Errorf("error UpdateUserOrder. err:%w", err)
+		return fmt.Errorf("error 1UpdateUserOrder. err:%w", err)
 	}
-	queryUsers := `UPDATE Users SET allPoints = Orders.allPoints + $1 WHERE id = $2`
+	queryUsers := `UPDATE Users SET allPoints = Users.allPoints + $1 WHERE id = $2`
 	ctxUsers, cancelUsers := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelUsers()
 	if _, err := tx.ExecContext(ctxUsers, queryUsers, ord.Ord.Accural, ord.IDUser); err != nil {
@@ -294,7 +294,7 @@ func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
 		if errRol != nil {
 			return fmt.Errorf("error UpdateUserOrder (update user) err:%w; and error rollback err:%w", err, errRol)
 		}
-		return fmt.Errorf("error UpdateUserOrder. err:%w", err)
+		return fmt.Errorf("error 2UpdateUserOrder. err:%w", err)
 	}
 	err = tx.Commit()
 	if err != nil {

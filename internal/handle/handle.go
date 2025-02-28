@@ -178,10 +178,6 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 }
 
 func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request) {
-	data := make([]byte, 10000)
-	n, _ := req.Body.Read(data)
-	data = data[:n]
-
 	tokenString := req.Header.Get("Authorization")
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
@@ -218,9 +214,6 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 
 func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("getBalance.")
-	data := make([]byte, 10000)
-	n, _ := req.Body.Read(data)
-	data = data[:n]
 
 	tokenString := req.Header.Get("Authorization")
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
@@ -271,9 +264,9 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 }
 
 func (han *ServiceHandler) getWithdrawals(res http.ResponseWriter, req *http.Request) {
-	data := make([]byte, 10000)
-	n, _ := req.Body.Read(data)
-	data = data[:n]
+	// data := make([]byte, 10000)
+	// n, _ := req.Body.Read(data)
+	// data = data[:n]
 
 	tokenString := req.Header.Get("Authorization")
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
