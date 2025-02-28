@@ -61,7 +61,6 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	n, _ := req.Body.Read(data)
 	data = data[:n]
 	cred := Credentials{}
-	han.Logger.Debugf("GetJSONValue body:%v", data)
 	if err := json.Unmarshal(data, &cred); err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
@@ -105,7 +104,6 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 	n, _ := req.Body.Read(data)
 	data = data[:n]
 	cred := Credentials{}
-	han.Logger.Debugf("GetJSONValue body:%v", data)
 	if err := json.Unmarshal(data, &cred); err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
@@ -163,6 +161,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("userOrder--> %s", userOrder)
 	err = han.Storage.SetOrder(&userOrder)
 	if err != nil {
+		han.Logger.Warnf("set order error err: %s", err)
 		if errors.Is(err, storage.ErrOrderLoadedAnotherUser) {
 			res.WriteHeader(http.StatusConflict)
 			return

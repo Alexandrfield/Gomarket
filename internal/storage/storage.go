@@ -62,7 +62,7 @@ func (st *DatabaseStorage) createTable(ctx context.Context) error {
 	}
 	st.Logger.Debugf("create table: Used")
 	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id SERIAL PRIMARY KEY, 
-	numer int, sum double precision, upload timestamp)`
+	numer int, polsak int, sum double precision, upload timestamp)`
 	if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
 		return fmt.Errorf("error while trying to create table Used: %w", err)
 	}
@@ -250,10 +250,10 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 		return fmt.Errorf("tx, error while trying update used points: %w", err)
 	}
 
-	query = `INSERT INTO Used (numer, sum, upload) VALUES ($1, $2, $3)`
+	query = `INSERT INTO Used (numer, polsak, sum, upload) VALUES ($1, $2, $3, $4)`
 	ctxUsed, cancelUsed := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelUsed()
-	if _, err = tx.ExecContext(ctxUsed, query, withdrawOrd.Order,
+	if _, err = tx.ExecContext(ctxUsed, query, withdrawOrd.Order, userID,
 		withdrawOrd.Sum, withdrawOrd.Processed); err != nil {
 		errr := tx.Rollback()
 		if errr != nil {
