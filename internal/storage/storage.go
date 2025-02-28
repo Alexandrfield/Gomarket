@@ -212,6 +212,7 @@ func (st *DatabaseStorage) GetCountMarketPoints(userID string) (float64, float64
 	if err != nil {
 		return 0.0, 0.0, fmt.Errorf("error scan value from row. err:%w", err)
 	}
+	fmt.Printf(">>> allPoints:%s; usedPoints:%s\n", allPoints, usedPoints)
 	return allPoints, usedPoints, nil
 }
 func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.WithdrawOrder) error {
@@ -286,6 +287,7 @@ func (st *DatabaseStorage) UpdateUserOrder(ord *common.UserOrder) error {
 		}
 		return fmt.Errorf("error 1UpdateUserOrder. err:%w", err)
 	}
+	fmt.Printf("Save ord.Ord.Accural:%d", ord.Ord.Accural)
 	queryUsers := `UPDATE Users SET allPoints = Users.allPoints + $1 WHERE id = $2`
 	ctxUsers, cancelUsers := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelUsers()
