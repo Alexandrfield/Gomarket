@@ -56,10 +56,7 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common
 		if err != nil {
 			communicator.Logger.Errorf("Storage.UpdateUserOrder:%s", err)
 		}
-		if ans.Status == common.OrderStatusProcessing || ans.Status == common.OrderStatusInvalid {
-			break
-		}
-
+		break
 	}
 }
 func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrder) (common.PaymentOrder, error, int) {
