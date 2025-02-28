@@ -48,7 +48,7 @@ func (han *ServiceHandler) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 		han.Logger.Debugf("Request: %s", r)
 		tokenString := r.Header.Get("Authorization")
 		han.Logger.Debugf("tokenString:%s", tokenString)
-
+		fmt.Printf("tokenString:%s\n", tokenString)
 		if tokenString == "" {
 			w.WriteHeader(http.StatusUnauthorized)
 			han.Logger.Debugf("Missing authorization header")

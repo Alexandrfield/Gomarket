@@ -23,4 +23,4 @@ vendor/
 .vscode
 
 golangci-lint
-.log
+*.log
