@@ -48,8 +48,8 @@ func main() {
 	router.Get(`/api/user/orders`, server.GetOrders())
 	router.Get(`/api/user/balance`, server.GetBalance())
 
-	router.Post(`/api/balance/withdraw`, server.Withdraw())
-	router.Get(`/api/balance/withdrawals`, server.Withdrawals())
+	router.Post(`/api/user/balance/withdraw`, server.Withdraw())
+	router.Get(`/api/user/balance/withdrawals`, server.Withdrawals())
 
 	logger.Infof("Server started. config.ServerAddress:%s", config.ServerAddress)
 	go func() {
