@@ -194,7 +194,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 	res.WriteHeader(http.StatusAccepted)
-	han.BufferOrder <- common.CreatUserOrder(idUser, string(data))
+	han.BufferOrder <- userOrder
 	res.Header().Set("Content-Type", "application/json")
 }
 
