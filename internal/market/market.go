@@ -36,6 +36,8 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common
 		if err != nil {
 			communicator.Logger.Errorf("sendToAddServer err:%s", err)
 		}
+		communicator.Logger.Errorf("Send     updated order:%s", order.Ord)
+		communicator.Logger.Errorf("Received updated order:%s", ans)
 		temp := common.UserOrder{IDUser: order.IDUser, Ord: ans}
 		_ = communicator.Storage.UpdateUserOrder(&temp)
 		if ans.Status == common.OrderStatusProcessing || ans.Status == common.OrderStatusInvalid {
