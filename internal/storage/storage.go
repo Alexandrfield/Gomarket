@@ -176,7 +176,7 @@ func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 		return fmt.Errorf("can not create transaction SetOrder. err:%w", err)
 	}
 	st.Logger.Debugf("SetOrder ord:%s;", ord)
-	query := `INSERT INTO Orders (numer, polsak, status, points, upload) VALUES ($1, $2, $3, $4, %5)`
+	query := `INSERT INTO Orders (numer, polsak, status, points, upload) VALUES ($1, $2, $3, $4, $5)`
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if _, err := tx.ExecContext(ctx, query, ord.Ord.Number, ord.IDUser,
