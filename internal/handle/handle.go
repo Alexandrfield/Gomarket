@@ -168,7 +168,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	fmt.Printf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
-		han.Logger.Debugf("issue get id from token %w", err)
+		han.Logger.Infof("issue get id from token %w", err)
 	}
 
 	userOrder := common.CreatUserOrder(idUser, string(idOrder))
