@@ -31,6 +31,8 @@ func ParseFlags() (Config, error) {
 	flag.Parse()
 
 	res := strings.Split(config.AccurakSystemAddres, ":")
+	fmt.Printf("old:config.AccurakSystemAddres: %s\n", config.AccurakSystemAddres)
 	config.AccurakSystemAddres = fmt.Sprintf("127.0.0.1:%s", res[1])
+	fmt.Printf("new:config.AccurakSystemAddres: %s\n", config.AccurakSystemAddres)
 	return config, nil
 }
