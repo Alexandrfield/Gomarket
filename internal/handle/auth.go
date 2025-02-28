@@ -34,7 +34,7 @@ func (autServer *AuthorizationServer) BuildJWTString(idUser string) (string, err
 	if err != nil {
 		return "", fmt.Errorf("errors sign. err:%w", err)
 	}
-	fmt.Printf("BuildJWTString:%s\n", tokenString)
+	fmt.Printf("ЖЖ:%s\n", tokenString)
 	return tokenString, nil
 }
 
