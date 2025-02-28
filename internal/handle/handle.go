@@ -151,20 +151,11 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 	fmt.Printf("--->%x", token)
 	res.Header().Set("Authorization", token)
 	res.Header().Set("Content-Type", "application/json")
-	//res.Header().Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
 	_, err = res.Write(accesJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
-	http.SetCookie(res, &http.Cookie{
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		// Uncomment below for HTTPS:
-		// Secure: true,
-		Name:  "jwt",
-		Value: token,
-	})
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {

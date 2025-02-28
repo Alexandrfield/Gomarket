@@ -34,6 +34,7 @@ func (autServer *AuthorizationServer) BuildJWTString(idUser string) (string, err
 	if err != nil {
 		return "", fmt.Errorf("errors sign. err:%w", err)
 	}
+	fmt.Printf("BuildJWTString:%x", tokenString)
 	return tokenString, nil
 }
 
@@ -53,6 +54,7 @@ func (autServer *AuthorizationServer) CheckToken(tokenString string) (bool, erro
 }
 
 func (autServer *AuthorizationServer) CheckTokenGetUserID(tokenString string) (string, error) {
+	fmt.Printf("CheckTokenGetUserID:%x", tokenString)
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		return autServer.secretKey, nil
