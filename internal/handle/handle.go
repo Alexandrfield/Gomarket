@@ -157,6 +157,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.Header().Set("Content-Type", "application/json")
+	han.Logger.Debugf("userOrder raw --> %s", string(idOrder))
 	userOrder := common.CreatUserOrder(idUser, string(idOrder))
 	han.Logger.Debugf("userOrder--> %s", userOrder)
 	err = han.Storage.SetOrder(&userOrder)
