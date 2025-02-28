@@ -171,6 +171,7 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 		han.Logger.Infof("issue get id from token %w", err)
 	}
 
+	res.Header().Set("Content-Type", "application/json")
 	userOrder := common.CreatUserOrder(idUser, string(idOrder))
 	han.Logger.Debugf("userOrder--> %s", userOrder)
 	err = han.Storage.SetOrder(&userOrder)
@@ -186,7 +187,6 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	}
 	res.WriteHeader(http.StatusAccepted)
 	han.BufferOrder <- userOrder
-	res.Header().Set("Content-Type", "application/json")
 }
 
 func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request) {
@@ -219,6 +219,7 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	res.Header().Set("Content-Type", "application/json")
 	_, err = res.Write(ordersJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
@@ -226,7 +227,6 @@ func (han *ServiceHandler) getOrders(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 }
 
@@ -242,7 +242,7 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		han.Logger.Debugf("issue get id from token %w", err)
 	}
-
+	res.Header().Set("Content-Type", "application/json")
 	currentBalance, allPoints, err := han.Storage.GetCountMarketPoints(idUser)
 	if err != nil {
 		han.Logger.Warnf("issue get order status %w", err)
@@ -255,8 +255,6 @@ func (han *ServiceHandler) getBalance(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
-
-	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 }
 
