@@ -74,6 +74,7 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrd
 		return ord, fmt.Errorf("error reading body. err:%w", err)
 	}
 	if err := json.Unmarshal(ans, &ord); err != nil {
+		communicator.Logger.Warnf("try unmarshal ans: %s", ans)
 		return ord, fmt.Errorf("error umarshal response. err:%s", err.Error())
 	}
 	return ord, nil
