@@ -205,6 +205,7 @@ func (st *DatabaseStorage) GetOrder(orderNum string) (*common.UserOrder, error) 
 func (st *DatabaseStorage) GetCountMarketPoints(userID string) (float64, float64, error) {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT allPoints, usedPoints FROM Users WHERE id = $1", userID)
+	fmt.Printf(">>>%s\n", row)
 	var allPoints float64
 	var usedPoints float64
 	err := row.Scan(&allPoints, &usedPoints)
