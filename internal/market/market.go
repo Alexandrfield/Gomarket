@@ -30,7 +30,10 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 	communicator.client = &http.Client{
 		Timeout: time.Second * 5, // интервал ожидания: 1 секунда
 	}
-	go communicator.processorSendToServer()
+	countWorker := 2
+	for i := 0; i < countWorker; i++ {
+		go communicator.processorSendToServer()
+	}
 	return communicator.bufferOrder
 }
 func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common.UserOrder) {
@@ -113,7 +116,7 @@ func (communicator *CommunicatorAddServer) processorSendToServer() {
 	for {
 		select {
 		case ord := <-communicator.bufferOrder:
-			go communicator.proccesOrderToAddServer(&ord)
+			communicator.proccesOrderToAddServer(&ord)
 		case <-communicator.done:
 			communicator.Logger.Debugf("Stop Proccesing payment orders")
 			return
