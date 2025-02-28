@@ -2,7 +2,6 @@ package server
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strings"
 )
@@ -32,6 +31,6 @@ func ParseFlags() (Config, error) {
 
 	// костыль для тестов. Наткнулся на ошибку, когда localhost неправильно резоливлся в сети докера
 	res := strings.Split(config.AccurakSystemAddres, ":")
-	config.AccurakSystemAddres = fmt.Sprintf("127.0.0.1:%s", res[2])
+	config.AccurakSystemAddres = "127.0.0.1:" + res[2]
 	return config, nil
 }

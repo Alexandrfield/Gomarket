@@ -17,7 +17,7 @@ import (
 var ErrPasswordNotValidForUser = errors.New("for this user password not valids")
 var ErrOrderLoadedAnotherUser = errors.New("this num order  was used another user")
 var ErrOrderLoaded = errors.New("for this num is already load")
-var ErrorInsufficientFunds = errors.New("not enough points for this actions")
+var ErrInsufficientFunds = errors.New("not enough points for this actions")
 
 type StorageCommunicator interface {
 	CreateNewUser(login string, password string) (string, error)
@@ -147,16 +147,16 @@ func (st *DatabaseStorage) AytorizationUser(login string, password string) (stri
 	}
 	return strconv.Itoa(userID), nil
 }
-func (st *DatabaseStorage) IsUserLoginExist(login string) (bool, error) {
+func (st *DatabaseStorage) IsUserLoginExist(login string) (res bool, err error) {
 	row := st.db.QueryRowContext(context.Background(),
 		"SELECT id FROM Users WHERE login = $1", login)
 	var userID int
-	err := row.Scan(&userID)
+	err = row.Scan(&userID)
 	if err != nil {
-		return false, nil
-		//return false, fmt.Errorf("error scan value from row. err:%w", err)
+		return res, fmt.Errorf("error scan value from row. err:%w", err)
 	}
-	return true, nil
+	res = true
+	return
 }
 func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 	existOrd, err := st.GetOrder(ord.Ord.Number)
@@ -232,9 +232,9 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 		errr := tx.Rollback()
 		if errr != nil {
 			return fmt.Errorf("error UseMarketPoints: err%w;And can not rollback! err:%w",
-				ErrorInsufficientFunds, errr)
+				ErrInsufficientFunds, errr)
 		}
-		return ErrorInsufficientFunds
+		return ErrInsufficientFunds
 	}
 
 	query :=
@@ -245,7 +245,7 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 		errr := tx.Rollback()
 		if errr != nil {
 			return fmt.Errorf("error UseMarketPoints: err%w;And can not rollback! err:%w",
-				ErrorInsufficientFunds, errr)
+				ErrInsufficientFunds, errr)
 		}
 		return fmt.Errorf("tx, error while trying update used points: %w", err)
 	}
@@ -258,7 +258,7 @@ func (st *DatabaseStorage) UseMarketPoints(userID string, withdrawOrd *common.Wi
 		errr := tx.Rollback()
 		if errr != nil {
 			return fmt.Errorf("error UseMarketPoints: err%w;And can not rollback! err:%w",
-				ErrorInsufficientFunds, errr)
+				ErrInsufficientFunds, errr)
 		}
 		return fmt.Errorf("tx, error while trying update used points: %w", err)
 	}

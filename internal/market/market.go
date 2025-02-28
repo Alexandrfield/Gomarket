@@ -13,8 +13,8 @@ import (
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 )
 
-var ErrorOrder = errors.New("order not registrate")
-var ErrorTooManyRequests = errors.New("too many request to accuracy server")
+var ErrOrder = errors.New("order not registrate")
+var ErrTooManyRequests = errors.New("too many request to accuracy server")
 
 type CommunicatorAddServer struct {
 	Logger       common.Logger
@@ -36,14 +36,14 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common.UserOrder) {
 	communicator.Logger.Debugf("proccesOrderToAddServer order:%s", *order)
 	for {
-		ans, err, retry := communicator.sendToAddServer(order)
+		ans, retry, err := communicator.sendToAddServer(order)
 		if err != nil {
 			communicator.Logger.Errorf("sendToAddServer err:%s; retry:%d", err, retry)
-			if errors.Is(err, ErrorTooManyRequests) {
+			if errors.Is(err, ErrTooManyRequests) {
 				time.Sleep(time.Second * time.Duration(retry))
 				continue
 			}
-			if errors.Is(err, ErrorOrder) {
+			if errors.Is(err, ErrOrder) {
 				ans.Status = common.OrderStatusInvalid
 				ans.Accural = 0.0
 			}
@@ -59,7 +59,7 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common
 		break
 	}
 }
-func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrder) (common.PaymentOrder, error, int) {
+func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrder) (common.PaymentOrder, int, error) {
 	var ord common.PaymentOrder
 	communicator.Logger.Infof("communicator.AddresMarket: %s", communicator.AddresMarket)
 	url := fmt.Sprintf("http://%s/api/orders/%s", communicator.AddresMarket, order.Ord.Number)
@@ -76,7 +76,7 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrd
 
 	resp, err := communicator.client.Do(req)
 	if err != nil {
-		return ord, fmt.Errorf("http.NewRequest.Do err:%w", err), 0
+		return ord, 0, fmt.Errorf("http.NewRequest.Do err:%w", err)
 	}
 	defer func() {
 		err := resp.Body.Close()
@@ -86,13 +86,13 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrd
 	}()
 	ans, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ord, fmt.Errorf("error reading body. err:%w", err), 0
+		return ord, 0, fmt.Errorf("error reading body. err:%w", err)
 	}
 	communicator.Logger.Warnf("accuravy servvice ans.Status: %s", resp.StatusCode)
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
-		return ord, ErrorOrder, 0
+		return ord, 0, ErrOrder
 	case http.StatusTooManyRequests:
 		retryAfter := resp.Header.Get("Retry-After")
 		ret, err := strconv.Atoi(retryAfter)
@@ -100,14 +100,14 @@ func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrd
 			communicator.Logger.Warnf("problem with atoi str%s, err:%s", retryAfter, err)
 			ret = 0
 		}
-		return ord, ErrorTooManyRequests, ret
+		return ord, ret, ErrTooManyRequests
 	}
 
 	if err := json.Unmarshal(ans, &ord); err != nil {
 		communicator.Logger.Warnf("try unmarshal ans: %s", ans)
-		return ord, fmt.Errorf("error umarshal response. err:%s", err.Error()), 0
+		return ord, 0, fmt.Errorf("error umarshal response. err:%s", err.Error())
 	}
-	return ord, nil, 0
+	return ord, 0, nil
 }
 func (communicator *CommunicatorAddServer) processorSendToServer() {
 	for {

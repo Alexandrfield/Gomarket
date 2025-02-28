@@ -11,7 +11,7 @@ import (
 	"github.com/Alexandrfield/Gomarket/internal/common"
 	"github.com/Alexandrfield/Gomarket/internal/handle"
 	"github.com/Alexandrfield/Gomarket/internal/market"
-	"github.com/Alexandrfield/Gomarket/internal/server"
+	serverPack "github.com/Alexandrfield/Gomarket/internal/server"
 	"github.com/Alexandrfield/Gomarket/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -21,7 +21,7 @@ func main() {
 	log.Printf("Start app test log.")
 	logger := common.GetComponentLogger()
 	logger.Infof("Start app.")
-	config, err := server.ParseFlags()
+	config, err := serverPack.ParseFlags()
 	if err != nil {
 		logger.Fatalf("issue with parse flags")
 	}

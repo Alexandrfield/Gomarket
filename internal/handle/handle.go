@@ -18,9 +18,9 @@ type Credentials struct {
 
 type ServiceHandler struct {
 	BufferOrder chan common.UserOrder
-	authServer  AuthorizationServer
 	Storage     storage.StorageCommunicator
 	Logger      common.Logger
+	authServer  AuthorizationServer
 }
 
 func (han *ServiceHandler) Init() {
@@ -64,13 +64,13 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 		return
 	}
 	isExist, err := han.Storage.IsUserLoginExist(cred.Login)
+	if isExist {
+		res.WriteHeader(http.StatusConflict)
+		return
+	}
 	if err != nil {
 		han.Logger.Warnf("Problem check Login:%s; in system. err:%s", cred.Login, err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if isExist {
-		res.WriteHeader(http.StatusConflict)
 		return
 	}
 	idUser, err := han.Storage.CreateNewUser(cred.Login, server.ComplicatedPasswd(cred.Password))
@@ -107,13 +107,13 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	isExist, err := han.Storage.IsUserLoginExist(cred.Login)
+	if !isExist {
+		res.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	if err != nil {
 		han.Logger.Warnf("Problem check Login:%s; in system. err:%s", cred.Login, err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if !isExist {
-		res.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	idUs, err := han.Storage.AytorizationUser(cred.Login, server.ComplicatedPasswd(cred.Password))
