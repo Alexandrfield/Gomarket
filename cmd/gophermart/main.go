@@ -25,10 +25,6 @@ func main() {
 	if err != nil {
 		logger.Fatalf("issue with parse flags")
 	}
-	//TODO: Remove this logs
-	logger.Debugf("DatabaseURI:%s; ServerAddress:%s; AccurakSystemAddres:%s;",
-		config.DatabaseURI, config.ServerAddress, config.AccurakSystemAddres)
-
 	storeConfig := storage.Config{DatabasURI: config.DatabaseURI}
 	storageServer, err := storage.GetStorage(storeConfig, logger)
 	if err != nil {

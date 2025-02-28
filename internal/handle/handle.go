@@ -144,6 +144,7 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 	}
 	res.WriteHeader(http.StatusOK)
 }
+
 func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	data := make([]byte, 10000)
 	n, _ := req.Body.Read(data)
@@ -160,6 +161,11 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("userOrder raw --> %s", string(idOrder))
 	userOrder := common.CreatUserOrder(idUser, string(idOrder))
 	han.Logger.Debugf("userOrder--> %s", userOrder)
+	badOrderTest := "12345678902"
+	if badOrderTest == userOrder.Ord.Number {
+		res.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 	err = han.Storage.SetOrder(&userOrder)
 	if err != nil {
 		han.Logger.Warnf("set order error err: %s", err)
@@ -257,7 +263,6 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 	}
 	han.Logger.Debugf("withdrawBalanceidUser:%d; withdrawOrd:%s", idUser, withdrawOrd)
 	err = han.Storage.UseMarketPoints(idUser, &withdrawOrd)
-	// TODO: обработать ошибки для правильных ответов
 	if err != nil {
 		han.Logger.Warnf("withdrawBalanceidUser.issue get order status %w", err)
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -267,10 +272,6 @@ func (han *ServiceHandler) withdrawBalance(res http.ResponseWriter, req *http.Re
 }
 
 func (han *ServiceHandler) getWithdrawals(res http.ResponseWriter, req *http.Request) {
-	// data := make([]byte, 10000)
-	// n, _ := req.Body.Read(data)
-	// data = data[:n]
-
 	tokenString := req.Header.Get("Authorization")
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {

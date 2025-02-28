@@ -17,7 +17,6 @@ type Logger interface {
 
 func GetComponentLogger() Logger {
 	configLogConsole := zap.NewDevelopmentEncoderConfig()
-	// configLogConsole := zap.NewProductionEncoderConfig()
 	configLogConsole.ConsoleSeparator = " | "
 	configLogConsole.EncodeTime = zapcore.ISO8601TimeEncoder
 	configLogConsole.EncodeLevel = zapcore.CapitalColorLevelEncoder

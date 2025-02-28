@@ -87,18 +87,6 @@ func (han *ServiceHandler) WithLogging(h http.HandlerFunc) http.HandlerFunc {
 				responseData:   responseData,
 			}
 		}
-		// data := make([]byte, 10000)
-		// n, _ := r.Body.Read(data)
-		// data = data[:n]
-		// msgSign := r.Header.Get("HashSHA256")
-		// if msgSign != "" && len(data) > 0 {
-		// 	sig, _ := b64.StdEncoding.DecodeString(msgSign)
-		// 	if !common.CheckHash(data, sig, config.SignKey) {
-		// 		lw.WriteHeader(http.StatusBadRequest)
-		// 	}
-		// }
-		// r.Body = io.NopCloser(bytes.NewBuffer(data))
-
 		h.ServeHTTP(&lw, r)
 		duration := time.Since(start)
 		han.Logger.Infof("uri:%s; method:%s; status:%d; size:%d; duration:%s;",
