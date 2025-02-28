@@ -34,13 +34,11 @@ type StorageCommunicator interface {
 
 func GetStorage(config Config, logger common.Logger) (StorageCommunicator, error) {
 	t := DatabaseStorage{Logger: logger}
-	fmt.Printf("teest 1 \n")
 	err := t.Start(config.DatabasURI)
 	if err != nil {
 		return nil, fmt.Errorf("problem start DB. err:%w", err)
 	}
-	fmt.Printf("teest 2 \n")
-	fmt.Printf("teest Ping ->>> %v", t.PingDatabase())
+	logger.Infof("teest Ping database: %v", t.PingDatabase())
 	return &t, nil
 }
 

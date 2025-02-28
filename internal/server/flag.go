@@ -2,7 +2,9 @@ package server
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 )
 
 func ParseFlags() (Config, error) {
@@ -28,5 +30,7 @@ func ParseFlags() (Config, error) {
 		"addres for connect accures sysem ")
 	flag.Parse()
 
+	res := strings.Split(config.AccurakSystemAddres, ":")
+	config.AccurakSystemAddres = fmt.Sprintf("127.0.0.1:%s", res[1])
 	return config, nil
 }
