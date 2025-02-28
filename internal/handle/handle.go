@@ -92,23 +92,12 @@ func (han *ServiceHandler) registarte(res http.ResponseWriter, req *http.Request
 	}
 
 	res.Header().Set("Authorization", token)
-	fmt.Printf("--->%x", token)
 	res.Header().Set("Content-Type", "application/json")
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
 	_, err = res.Write(accesJSON)
 	if err != nil {
 		han.Logger.Debugf("issue with write %w", err)
 	}
-
-	han.Logger.Debugf("Registrate new user. res:%s", res)
-	http.SetCookie(res, &http.Cookie{
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		// Uncomment below for HTTPS:
-		// Secure: true,
-		Name:  "jwt",
-		Value: token,
-	})
 	res.WriteHeader(http.StatusOK)
 }
 func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
@@ -148,7 +137,6 @@ func (han *ServiceHandler) login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("--->%x", token)
 	res.Header().Set("Authorization", token)
 	res.Header().Set("Content-Type", "application/json")
 	accesJSON, _ := json.Marshal(LoginResponse{AccessToken: token})
@@ -165,7 +153,6 @@ func (han *ServiceHandler) orders(res http.ResponseWriter, req *http.Request) {
 	han.Logger.Debugf("body:%v", idOrder)
 
 	tokenString := req.Header.Get("Authorization")
-	fmt.Printf("tokenString:%v", tokenString)
 	idUser, err := han.authServer.CheckTokenGetUserID(tokenString)
 	if err != nil {
 		han.Logger.Infof("issue get id from token %w", err)

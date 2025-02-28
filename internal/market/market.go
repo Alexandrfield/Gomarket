@@ -46,6 +46,7 @@ func (communicator *CommunicatorAddServer) proccesOrderToAddServer(order *common
 }
 func (communicator *CommunicatorAddServer) sendToAddServer(order *common.UserOrder) (common.PaymentOrder, error) {
 	var ord common.PaymentOrder
+	communicator.Logger.Infof("communicator.AddresMarket: %s", communicator.AddresMarket)
 	url := fmt.Sprintf("http://%s/api/orders/%s", communicator.AddresMarket, order.Ord.Number)
 	req, err := http.NewRequest(
 		http.MethodGet, url, http.NoBody,
