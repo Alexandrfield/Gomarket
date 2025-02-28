@@ -31,7 +31,7 @@ func (communicator *CommunicatorAddServer) Init() chan common.UserOrder {
 		Timeout: time.Second * 5, // интервал ожидания: 1 секунда
 	}
 	countWorker := 2
-	for i := 0; i < countWorker; i++ {
+	for range countWorker {
 		go communicator.processorSendToServer()
 	}
 	return communicator.bufferOrder

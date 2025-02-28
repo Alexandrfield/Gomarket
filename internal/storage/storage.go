@@ -152,10 +152,7 @@ func (st *DatabaseStorage) IsUserLoginExist(login string) bool {
 		"SELECT id FROM Users WHERE login = $1", login)
 	var userID int
 	err := row.Scan(&userID)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 func (st *DatabaseStorage) SetOrder(ord *common.UserOrder) error {
 	existOrd, err := st.GetOrder(ord.Ord.Number)
