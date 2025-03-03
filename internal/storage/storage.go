@@ -65,12 +65,6 @@ func (st *DatabaseStorage) Migrate() error {
 	if err != nil {
 		st.Logger.Errorf("problem with migrate.NewWithDatabaseInstance. err:%s", err)
 	}
-	defer func() {
-		_, err = m.Close()
-		if err != nil {
-			st.Logger.Errorf("problem m.Close. err:%s", err)
-		}
-	}()
 	err = m.Up()
 	if err != nil {
 		st.Logger.Errorf("problem m.Up. err:%s", err)
