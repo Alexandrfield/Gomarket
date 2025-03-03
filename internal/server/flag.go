@@ -29,8 +29,6 @@ func ParseFlags() (Config, error) {
 		"addres for connect accures sysem ")
 	flag.Parse()
 
-	//config.DatabaseURI = "host=localhost port=5430 user=gopher password=qwerty dbname=postgres_db sslmode=disable"
-
 	// костыль для тестов. Наткнулся на ошибку, когда localhost неправильно резоливлся в сети докера
 	res := strings.Split(config.AccurakSystemAddres, ":")
 	config.AccurakSystemAddres = "127.0.0.1:" + res[2]
