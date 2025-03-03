@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -56,15 +58,18 @@ func (st *DatabaseStorage) Migrate() error {
 	if err != nil {
 		st.Logger.Errorf("problem with postgres.WithInstance. err:%s", err)
 	}
+	migrationPath := filepath.Join(filepath.Dir(os.Args[0]), "migrations")
 	m, err := migrate.NewWithDatabaseInstance(
-		"file:///../internal/storage/migrations",
+		"file://"+migrationPath,
 		"postgres", driver)
 	if err != nil {
 		st.Logger.Errorf("problem with migrate.NewWithDatabaseInstance. err:%s", err)
 	}
 	defer func() {
 		_, err = m.Close()
-		st.Logger.Errorf("problem m.Close. err:%s", err)
+		if err != nil {
+			st.Logger.Errorf("problem m.Close. err:%s", err)
+		}
 	}()
 	err = m.Up()
 	if err != nil {
