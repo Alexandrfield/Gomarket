@@ -11,7 +11,13 @@ import (
 	_ "github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
+	"database/sql"
+
 	"github.com/Alexandrfield/Gomarket/internal/common"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 var ErrPasswordNotValidForUser = errors.New("for this user password not valids")
@@ -47,27 +53,40 @@ type DatabaseStorage struct {
 	db     *sql.DB
 }
 
-func (st *DatabaseStorage) createTable(ctx context.Context) error {
-	st.Logger.Debugf("create table: Users")
-	const queryUsers = `CREATE TABLE if NOT EXISTS Users (id SERIAL PRIMARY KEY, 
-	login text, passwd text, allPoints double precision, usedPoints double precision)`
-	if _, err := st.db.ExecContext(ctx, queryUsers); err != nil {
-		return fmt.Errorf("error while trying to create table Users: %w", err)
+func (st *DatabaseStorage) Migrate() error {
+	driver, err := postgres.WithInstance(st.db, &postgres.Config{})
+	if err != nil {
+		st.Logger.Errorf("problem with postgres.WithInstance. err:%s", err)
 	}
-	st.Logger.Debugf("create table: Orders")
-	const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id SERIAL PRIMARY KEY, 
-	numer bigint, polsak int, status text, points double precision, upload timestamp)`
-	if _, err := st.db.ExecContext(ctx, queryOrders); err != nil {
-		return fmt.Errorf("error while trying to create table Orders: %w", err)
-	}
-	st.Logger.Debugf("create table: Used")
-	const queryUsed = `CREATE TABLE if NOT EXISTS Used (id SERIAL PRIMARY KEY, 
-	numer bigint, polsak int, sum double precision, upload timestamp)`
-	if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
-		return fmt.Errorf("error while trying to create table Used: %w", err)
-	}
+	m, err := migrate.NewWithDatabaseInstance(
+		"file:///../internal/storage/migrations",
+		"postgres", driver)
+	defer m.Close()
+	m.Up()
 	return nil
 }
+
+//	func (st *DatabaseStorage) createTable(ctx context.Context) error {
+//		st.Logger.Debugf("create table: Users")
+//		const queryUsers = `CREATE TABLE if NOT EXISTS Users (id SERIAL PRIMARY KEY,
+//		login text, passwd text, allPoints double precision, usedPoints double precision)`
+//		if _, err := st.db.ExecContext(ctx, queryUsers); err != nil {
+//			return fmt.Errorf("error while trying to create table Users: %w", err)
+//		}
+//		st.Logger.Debugf("create table: Orders")
+//		const queryOrders = `CREATE TABLE if NOT EXISTS Orders (id SERIAL PRIMARY KEY,
+//		numer bigint, polsak int, status text, points double precision, upload timestamp)`
+//		if _, err := st.db.ExecContext(ctx, queryOrders); err != nil {
+//			return fmt.Errorf("error while trying to create table Orders: %w", err)
+//		}
+//		st.Logger.Debugf("create table: Used")
+//		const queryUsed = `CREATE TABLE if NOT EXISTS Used (id SERIAL PRIMARY KEY,
+//		numer bigint, polsak int, sum double precision, upload timestamp)`
+//		if _, err := st.db.ExecContext(ctx, queryUsed); err != nil {
+//			return fmt.Errorf("error while trying to create table Used: %w", err)
+//		}
+//		return nil
+//	}
 func (st *DatabaseStorage) Start(databaseDsn string) error {
 	var err error
 	st.db, err = sql.Open("pgx", databaseDsn)
@@ -75,9 +94,9 @@ func (st *DatabaseStorage) Start(databaseDsn string) error {
 		return fmt.Errorf("can not open database. err:%w", err)
 	}
 	st.Logger.Infof("Connect to db open")
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
-	defer cancel()
-	err = st.createTable(ctx)
+	//	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	//	defer cancel()
+	err = st.Migrate()
 	if err != nil {
 		errClose := st.db.Close()
 		if errClose != nil {
